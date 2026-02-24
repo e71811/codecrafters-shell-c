@@ -16,9 +16,7 @@ int main(int argc, char *argv[]) {
            if(buffer[i] == '\n')
            {
              userInput[i] = '\0';
-             printf("{");
                printf("%s",userInput);
-             printf("}");
              printf(": command not found \n");
              break;
            }
