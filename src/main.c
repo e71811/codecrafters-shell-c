@@ -1,6 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+    #include <io.h>
+    #define F_OK 0
+    #define X_OK 0
+#else
+    #include <unistd.h>
+#endif
+
+
 
 int main(int argc, char *argv[]) {
   // Flush after every printf
@@ -39,13 +48,14 @@ int main(int argc, char *argv[]) {
              else if (strncmp(userInput,"type ",5) == 0)
              {
                const char s[2] = " ";
-               char *token;
-               token = strtok(userInput, s);
-               token = strtok(NULL, s);
+               char *cmd;
+               cmd = strtok(userInput, s);
+               //gets the word after type (its supposed to go after on of the directories that exists in path )
+               cmd = strtok(NULL, s);
                int flag = 0;
                for (int i = 0; builtins[i] !=NULL; i++)
                {
-                 if(strcmp(token,builtins[i]) == 0)
+                 if(strcmp(cmd,builtins[i]) == 0)
                  {
                    printf("%s ", builtins[i]);
                    printf("is a shell builtin\n");
@@ -54,12 +64,42 @@ int main(int argc, char *argv[]) {
 
                  }
                }
-               if (flag==0)
+               if (flag==0 && cmd != NULL )
                {
-                 printf("%s: not found\n", token);
-                 break;
+                 // first i need to get the specific path that i want to check
+                 char *path=getenv("PATH");
+                 // create a copy of the path so strtok wont make chamges the original path for future usage
+                 char *cpath=strdup(path);
+                 // directory that in each iteration will change accordingly
+                 char *directory = strtok(cpath, ":");
+                 // empty plain for the snprintf
+                 char currentPath[1024];
+                 const char s[2] = ":";
+                 while (directory != NULL)
+                 {
+                   snprintf(currentPath,sizeof(currentPath),"%s/%s",directory ,cmd);
+                   /// checks if the input exists in the path in a specific section
+                   if (access(currentPath,F_OK)==0)
+                   {
+                     // we found it but we need to make sure it has execute permissions
+                     if (access(currentPath,X_OK)==0)
+                     {
+                       printf("%s is %s \n",cmd,currentPath);
+                       flag=1 ;
+                       break;
+                     }else{directory = strtok(NULL, s);}
+                   }else
+                   {
+                     directory = strtok(NULL, s);
+                   }
+                 }
+                 free(cpath);
                }
+               if(flag== 0 && cmd !=NULL)
+               {
+                 printf("%s: not found\n", cmd);
 
+               }
              }
              else {
                printf("%s",userInput);
