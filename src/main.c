@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
              }
              if (userInput[0] == 'e' && userInput[1] == 'c' && userInput[2] == 'h' && userInput[3] == 'o')
              {
-               for (int i = 4; i < strlen(userInput); i++)
+               for (int i = 5; i < strlen(userInput); i++)
                {
                  printf("%c", userInput[i]);
                }
