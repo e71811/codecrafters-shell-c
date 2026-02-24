@@ -46,18 +46,21 @@ int main(int argc, char *argv[]) {
                token = strtok(userInput, s);
                token = strtok(NULL, s);
                int flag = 0;
-               for (int i = 5; i < sizeof(builtins); i++)
+               for (int i = 0; builtins[i] !=NULL; i++)
                {
                  if(strcmp(token,builtins[i]) == 0)
                  {
                    printf("%s ", builtins[i]);
                    printf("is a shell builtin");
                    flag = 1;
+                   break;
+
                  }
                }
                if ( flag==0)
                {
-                 printf("%s: not found", token);
+                 printf("%s: not found\n", token);
+                 break;
                }
 
              }
