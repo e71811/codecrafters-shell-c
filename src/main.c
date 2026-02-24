@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
                printf("\n");
                break;
              }
-               printf("%s",userInput);
+             printf("%s",userInput);
              printf(": command not found \n");
              break;
            }
