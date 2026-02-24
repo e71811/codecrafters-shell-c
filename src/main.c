@@ -23,14 +23,21 @@ int main(int argc, char *argv[]) {
              {
                return 0 ;
              }
+             if (userInput[0] == 'e' && userInput[1] == 'c' && userInput[2] == 'h' && userInput[3] == 'o')
+             {
+               for (int i = 4; i < strlen(userInput); i++)
+               {
+                 printf("%c", userInput[i]);
+               }
+               printf("\n");
+               break;
+             }
                printf("%s",userInput);
              printf(": command not found \n");
              break;
            }
              userInput[i]=buffer[i];
          }
-
     }
-
   return 0;
 }
