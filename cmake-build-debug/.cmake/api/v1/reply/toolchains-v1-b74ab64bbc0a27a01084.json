@@ -1,0 +1,93 @@
+{
+	"kind" : "toolchains",
+	"toolchains" : 
+	[
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include",
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/include",
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed",
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/x86_64-w64-mingw32/include"
+					],
+					"linkDirectories" : [],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : []
+				},
+				"path" : "C:/\u05de\u05e9\u05d7\u05e7\u05d9\u05dd \u05d5\u05ea\u05d5\u05db\u05e0\u05d5\u05ea/CLion 2024.2.2/bin/mingw/bin/gcc.exe",
+				"version" : "13.1.0"
+			},
+			"language" : "C",
+			"sourceFileExtensions" : 
+			[
+				"c",
+				"m"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++",
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32",
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward",
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include",
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/include",
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed",
+						"C:/\u256b\u20a7\u256b\u2310\u256b\u05e7\u256b\u00ba\u256b\u05e9\u256b\u00a5 \u256b\u05e5\u256b\u00ac\u256b\u05e5\u256b\u00a2\u256b\u00e1\u256b\u05e5\u256b\u00ac/CLion 2024.2.2/bin/mingw/x86_64-w64-mingw32/include"
+					],
+					"linkDirectories" : [],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : []
+				},
+				"path" : "C:/\u05de\u05e9\u05d7\u05e7\u05d9\u05dd \u05d5\u05ea\u05d5\u05db\u05e0\u05d5\u05ea/CLion 2024.2.2/bin/mingw/bin/g++.exe",
+				"version" : "13.1.0"
+			},
+			"language" : "CXX",
+			"sourceFileExtensions" : 
+			[
+				"C",
+				"M",
+				"c++",
+				"cc",
+				"cpp",
+				"cxx",
+				"mm",
+				"mpp",
+				"CPP",
+				"ixx",
+				"cppm",
+				"ccm",
+				"cxxm",
+				"c++m"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"implicit" : {},
+				"path" : "C:/\u05de\u05e9\u05d7\u05e7\u05d9\u05dd \u05d5\u05ea\u05d5\u05db\u05e0\u05d5\u05ea/CLion 2024.2.2/bin/mingw/bin/windres.exe"
+			},
+			"language" : "RC",
+			"sourceFileExtensions" : 
+			[
+				"rc",
+				"RC"
+			]
+		}
+	],
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}
