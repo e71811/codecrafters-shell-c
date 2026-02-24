@@ -8,14 +8,21 @@ int main(int argc, char *argv[]) {
     while(1)
     {
       printf("$ ");
+      //sets the buffer
       char buffer[1000];
+      //1 gives the source of input 2 whats the max size of the input can be
        fgets(buffer, sizeof(buffer), stdin);
+      //sets the input so i can interact with it later
          char userInput[sizeof(buffer)];
          for(int i = 0; i < strlen(buffer); i++)
          {
            if(buffer[i] == '\n')
            {
              userInput[i] = '\0';
+             if (strcmp(userInput,"exit")==0)
+             {
+               return 0 ;
+             }
                printf("%s",userInput);
              printf(": command not found \n");
              break;
