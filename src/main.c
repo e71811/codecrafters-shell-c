@@ -25,10 +25,8 @@ int main(int argc, char *argv[]) {
              if (strcmp(userInput,"exit")==0)
              {
                return 0 ;
-             }
-
-             // echo command
-             if (userInput[0] == 'e' && userInput[1] == 'c' && userInput[2] == 'h' && userInput[3] == 'o')
+               // echo command
+             } else if (userInput[0] == 'e' && userInput[1] == 'c' && userInput[2] == 'h' && userInput[3] == 'o')
              {
                for (int i = 5; i < strlen(userInput); i++)
                {
@@ -37,9 +35,8 @@ int main(int argc, char *argv[]) {
                printf("\n");
                break;
              }
-
              // Type command
-             if (strncmp(userInput,"type ",5) == 0)
+             else if (strncmp(userInput,"type ",5) == 0)
              {
                const char s[2] = " ";
                char *token;
@@ -51,22 +48,24 @@ int main(int argc, char *argv[]) {
                  if(strcmp(token,builtins[i]) == 0)
                  {
                    printf("%s ", builtins[i]);
-                   printf("is a shell builtin");
+                   printf("is a shell builtin\n");
                    flag = 1;
                    break;
 
                  }
                }
-               if ( flag==0)
+               if (flag==0)
                {
                  printf("%s: not found\n", token);
                  break;
                }
 
              }
-             printf("%s",userInput);
-             printf(": command not found \n");
-             break;
+             else {
+               printf("%s",userInput);
+               printf(": command not found \n");
+               break;}
+
            }
              userInput[i]=buffer[i];
          }
