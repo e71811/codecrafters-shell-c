@@ -8,7 +8,8 @@
 #else
     #include <unistd.h>
 #endif
-
+#include <sys/types.h>
+#include <sys/wait.h>
 
 
 int main(int argc, char *argv[]) {
@@ -25,16 +26,19 @@ int main(int argc, char *argv[]) {
          char userInput[sizeof(buffer)];
       // sets buit in commands
       char *builtins[] = {"exit", "echo", "type", NULL};
-         for(int i = 0; i < strlen(buffer); i++)
-         {
-           if(buffer[i] == '\n')
-           {
-             userInput[i] = '\0';
-             // exit command
+      int i ;
+      // copying  the buffer content and making sure that in the end of it theres \0
+      for(i = 0; i < strlen(buffer); i++) {
+        if(buffer[i] == '\n') break;
+        userInput[i] = buffer[i];
+      }
+      userInput[i] = '\0';
+
+             // ---exit command---
              if (strcmp(userInput,"exit")==0)
              {
                return 0 ;
-               // echo command
+               // ---echo command---
              } else if (userInput[0] == 'e' && userInput[1] == 'c' && userInput[2] == 'h' && userInput[3] == 'o')
              {
                for (int i = 5; i < strlen(userInput); i++)
@@ -42,9 +46,9 @@ int main(int argc, char *argv[]) {
                  printf("%c", userInput[i]);
                }
                printf("\n");
-               break;
              }
-             // Type command
+
+             // ---Type command---
              else if (strncmp(userInput,"type ",5) == 0)
              {
                const char s[2] = " ";
@@ -101,14 +105,84 @@ int main(int argc, char *argv[]) {
 
                }
              }
-             else {
-               printf("%s",userInput);
-               printf(": command not found \n");
-               break;}
 
-           }
-             userInput[i]=buffer[i];
-         }
-    }
+             //---running programs---
+             else if(true)
+             {
+               char *args[64];
+               int argumentCount = 0;
+               char *currentArgument = strtok(userInput, " ");
+               while(currentArgument != NULL )
+               {
+                 args[argumentCount] = currentArgument;
+                 argumentCount++;
+                 currentArgument = strtok(NULL, " ");
+               }
+               //for exec to work we need at the end NUll
+               args[argumentCount] = NULL;
+               // in case the user just entered " " without anything else after
+               // also the name of the command
+               char *startCommand = args[0];
+               if (startCommand == NULL)
+               {
+                 continue;
+               }
+
+               int flag = 0;
+               for (int i = 0; builtins[i] !=NULL; i++)
+               {
+                 if(strcmp(startCommand,builtins[i]) == 0)
+                 {
+                   printf("%s ", builtins[i]);
+                   printf("is a shell builtin\n");
+                   flag = 1;
+                   break;
+                 }
+               }
+                 if (flag==0 && startCommand != NULL )
+                 {
+                   // first i need to get the specific path that i want to check
+                   char *path=getenv("PATH");
+                   // create a copy of the path so strtok wont make chamges the original path for future usage
+                   char *cpath=strdup(path);
+                   // directory that in each iteration will change accordingly
+                   char *directory = strtok(cpath, ":");
+                   // empty plain for the snprintf
+                   char currentPath[1024];
+                   const char s[2] = ":";
+                   while (directory != NULL)
+                   {
+                     snprintf(currentPath,sizeof(currentPath),"%s/%s",directory ,startCommand);
+                     /// checks if the input exists in the path in a specific section
+                     if (access(currentPath,F_OK)==0)
+                     {
+                       // we found it but we need to make sure it has execute permissions
+                       if (access(currentPath,X_OK)==0)
+                       {
+                          pid_t pid = fork();
+
+                         flag=1 ;
+                         break;
+                       }else{directory = strtok(NULL, s);}
+                     }else
+                     {
+                       directory = strtok(NULL, s);
+                     }
+                   }
+                   free(cpath);
+                 }
+                 if(flag== 0 && startCommand !=NULL)
+                 {
+                   printf("%s: not found\n", startCommand);
+                 }
+                 }
+               }
+             //  else {
+             //    printf("%s",userInput);
+             //   printf(": command not found \n");
+             //    break;}
   return 0;
 }
+
+
+
