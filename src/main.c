@@ -70,6 +70,7 @@ int BetterStrTok(char *buffer ,char **seperatedWords)
 int main(int argc, char *argv[]) {
   // Flush after every printf
   setbuf(stdout, NULL);
+  char *builtins[] = {"exit", "echo", "type","pwd","cd", NULL};
     while(1)
     {
       printf("$ ");
@@ -77,41 +78,42 @@ int main(int argc, char *argv[]) {
       char buffer[1000];
       //1 gives the source of input 2 whats the max size of the input can be
        fgets(buffer, sizeof(buffer), stdin);
-      //sets the input so i can interact with it later
-         char userInput[sizeof(buffer)];
-      // sets buit in commands
-      char *builtins[] = {"exit", "echo", "type","pwd","cd", NULL};
-      int i ;
-      // copying  the buffer content and making sure that in the end of it theres \0
-      for(i = 0; i < strlen(buffer); i++) {
-        if(buffer[i] == '\n') break;
-        userInput[i] = buffer[i];
-      }
-      userInput[i] = '\0';
+       // strspn calc the amount of chars until \n then we want to change it specificly
+        buffer[strcspn(buffer, "\n")] = '\0';
+        char *seperatedWords[100];
+       int numArgs = BetterStrTok(buffer, seperatedWords);
 
              // ---exit command---
-             if (strcmp(userInput,"exit")==0)
+             if (strcmp(seperatedWords[0],"exit")==0)
              {
                return 0 ;
-               // ---echo command---
-             } else if (userInput[0] == 'e' && userInput[1] == 'c' && userInput[2]
-               == 'h' && userInput[3] == 'o')
+
+             }
+
+             // ---echo command---
+             else if (strcmp(seperatedWords[0],"echo")==0)
              {
-               for (int i = 5; i < strlen(userInput); i++)
+               for (int i = 1; seperatedWords[i] != NULL; i++)
                {
-                 printf("%c", userInput[i]);
+                 printf("%s", seperatedWords[i]);
+                 // adds " " for all the words except the last word
+                 if (seperatedWords[i+1] != NULL)
+                 {
+                   printf(" ");
+                 }
                }
                printf("\n");
              }
 
              // ---Type command---
-             else if (strncmp(userInput,"type ",5) == 0)
+             else if (strcmp(seperatedWords[0],"type") == 0)
              {
-               const char s[2] = " ";
+               if (numArgs < 2) {
+                 //  if the input is only type without anything after i will just continue
+                 continue;
+               }
                char *cmd;
-               cmd = strtok(userInput, s);
-               //gets the word after type (its supposed to go after on of the directories that exists in path )
-               cmd = strtok(NULL, s);
+               cmd = seperatedWords[1];
                int flag = 0;
                for (int i = 0; builtins[i] !=NULL; i++)
                {
@@ -160,9 +162,11 @@ int main(int argc, char *argv[]) {
                  printf("%s: not found\n", cmd);
 
                }
-               // ---pwd command---
-             }else if (strcmp(userInput,"pwd")==0)
-             {
+
+             }
+
+                 // ---pwd command---
+              else if (strcmp(seperatedWords[0],"pwd")==0){
                char path[1024];
                if(getcwd(path,sizeof(path)) == NULL)
                {
@@ -171,49 +175,35 @@ int main(int argc, char *argv[]) {
                {
                  printf("%s\n", path);
                }
-               // ---change directory command---
-             }else if(strncmp(userInput,"cd ",3) == 0)
+
+             }
+
+                // ---change directory command---
+               else if(strcmp(seperatedWords[0],"cd") == 0)
              {
-               char copyUserIpnput[1024] ;
-               strcpy(copyUserIpnput,userInput);
-               char *check = strtok(userInput," ");
-               // checks if the user typed cd ~
-               check = strtok(NULL," ");
-               // the user coludve typed just cd ...
-               if (check != NULL)
-               {
-                 char newPath[1024];
-                 if (check[0] == '~')
+                 // if the user types only cd  then continue
+                 if (numArgs < 2 || seperatedWords[1] == NULL) {
+                   continue;
+                 }
+                 char *target = seperatedWords[1];
+               char newpath[1024] ;
+                 // if the user uses ~
+                 if (target[0] == '~')
                  {
-                   // first i need to get the specific HOME
-                   char *Home=getenv("HOME");
-                   if (Home != NULL)
-                   {
-                     // join toghther the right path , check +1 cause i want to look at what comes after ~
-                     // and also dont want to change the check
-                     snprintf(newPath,sizeof(newPath),"%s%s",Home,check+1 );
-                     if (chdir(newPath)== -1)
-                     {
-                       printf("cd: %s: No such file or directory\n", check);
-                     }
-                   } else
-                   {
-                     perror("No HOME eror accured");
-                   }
-                 }else
-                 {
-                   // its not ~ so just
-                   char *newDir;
-                   newDir = strtok(copyUserIpnput, " ");
-                   //gets the word after cd
-                   newDir = strtok(NULL, " ");
-                   // changes the directory to what the user has typed
-                   if (chdir(newDir)== -1)
-                   {
-                     printf("cd: %s: No such file or directory\n", newDir);
+                   char *Home = getenv("HOME");
+                   if (Home != NULL) {
+                     // i use what the user has typed after ~ and add it after the newpath
+                     snprintf(newpath, sizeof(newpath), "%s%s", Home, target + 1);
+                     target = newpath;
+                   } else {
+                     fprintf(stderr, "cd: HOME environment variable not set\n");
+                     continue;
                    }
                  }
-               }
+                   if (chdir(target) == -1) {
+                     // if theres an eror with the chdir
+                     printf("cd: %s: No such file or directory\n", seperatedWords[1]);
+                   }
              }
 
              //---running programs---
@@ -221,7 +211,7 @@ int main(int argc, char *argv[]) {
              {
                char *args[64];
                int argumentCount = 0;
-               char *currentArgument = strtok(userInput, " ");
+               char *currentArgument = seperatedWords[0];
                while(currentArgument != NULL )
                {
                  args[argumentCount] = currentArgument;
@@ -307,6 +297,10 @@ int main(int argc, char *argv[]) {
                  {
                    printf("%s: not found\n", startCommand);
                  }
+                 }
+                 for (int i = 0; i < numArgs; i++)
+                 {
+                        free(seperatedWords[i]);
                  }
                }
   return 0;
