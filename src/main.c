@@ -61,6 +61,7 @@ int BetterStrTok(char *buffer ,char **seperatedWords)
   {
     cWord[j] = '\0';
     seperatedWords[wordsCount] = strdup(cWord);
+    wordsCount++;
   }
   // we ended with a NULL so we can easily go through the words and know when we finised
   seperatedWords[wordsCount] = NULL;
