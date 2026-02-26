@@ -105,6 +105,17 @@ int main(int argc, char *argv[]) {
                  printf("%s: not found\n", cmd);
 
                }
+               // ---Type command---
+             }else if (strcmp(userInput,"pwd")==0)
+             {
+               char path[1024];
+               if(getcwd(path,sizeof(path)) == NULL)
+               {
+                 perror("getcwd eror accured");
+               }else
+               {
+                 printf("%s\n", path);
+               }
              }
 
              //---running programs---
