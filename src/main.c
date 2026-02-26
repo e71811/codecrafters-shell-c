@@ -210,94 +210,51 @@ int main(int argc, char *argv[]) {
              //---running programs---
              else if(true)
              {
-               char *args[64];
-               int argumentCount = 0;
-               char *currentArgument = seperatedWords[0];
-               while(currentArgument != NULL )
-               {
-                 args[argumentCount] = currentArgument;
-                 argumentCount++;
-                 currentArgument = strtok(NULL, " ");
-               }
-               //for exec to work we need at the end NUll
-               args[argumentCount] = NULL;
-               // in case the user just entered " " without anything else after
-               // also the name of the command
-               char *startCommand = args[0];
+               char *startCommand = seperatedWords[0];
+
                if (startCommand == NULL)
                {
                  continue;
                }
+               char *path = getenv("PATH");
+               // creates a copy of path because iam going to edit cpath and i dont want to change the original path
+               char *cpath = strdup(path);
+               // get the first word before :
+               char *directory = strtok(cpath, ":");
+               char currentPath[1024];
+               int found = 0;
+               // for each subsection in the path we need to check if the program is in this specific subsection
+               while (directory != NULL) {
+                 // creates path + command/program
+                 snprintf(currentPath, sizeof(currentPath), "%s/%s", directory, startCommand);
 
-               int flag = 0;
-               for (int i = 0; builtins[i] !=NULL; i++)
-               {
-                 if(strcmp(startCommand,builtins[i]) == 0)
-                 {
-                   printf("%s ", builtins[i]);
-                   printf("is a shell builtin\n");
-                   flag = 1;
-                   break;
-                 }
-               }
-                 if (flag==0 && startCommand != NULL )
-                 {
-                   // first i need to get the specific path that i want to check
-                   char *path=getenv("PATH");
-                   // create a copy of the path so strtok wont make chamges the original path for future usage
-                   char *cpath=strdup(path);
-                   // directory that in each iteration will change accordingly
-                   char *directory = strtok(cpath, ":");
-                   // empty plain for the snprintf
-                   char currentPath[1024];
-                   const char s[2] = ":";
-                   while (directory != NULL)
-                   {
-                     snprintf(currentPath,sizeof(currentPath),"%s/%s",directory ,startCommand);
-                     /// checks if the input exists in the path in a specific section
-                     if (access(currentPath,F_OK)==0)
-                     {
-                       // we found it but we need to make sure it has execute permissions
-                       if (access(currentPath,X_OK)==0)
-                       {
-                         flag = 1 ;
-                         // makes a son program that run inside our parent shell program (create copy of shell)
-                          pid_t pid = fork();
-                         // this if statmens makes sure that we only interact with the son who get the 0 val
-                         // and not with the father which has other pid val
-                         if(pid == 0 )
-                         {
-                           // safety measure to make sure that execve did not fail for some reason
-                           // and also runs the program that the user sent and close son afterward
-                           if(execve(currentPath,args,NULL) == -1)
-                           {
-                             perror("execve");
-                             exit(EXIT_FAILURE);
-                           }
-                           // the father has different pid address so we interact here only with the father
-
-                         }else if (pid>0)
-                         {
-                           // basicly means wait until one of the sons stops it actions
-                           wait(NULL);
-                           flag = 1 ;
-                           break;
-                         } else
-                         {
-                           printf("fork failed ");
-                         }
-                       }else{directory = strtok(NULL, s);}
-                     }else
-                     {
-                       directory = strtok(NULL, s);
+                 // checks if executable and exists
+                 if (access(currentPath, X_OK) == 0) {
+                   found = 1;
+                   // creates a son for the shell
+                   pid_t pid = fork();
+                   // only the son has pid val of 0 the father has the address in pid so that we have a way to interact
+                   // with the son seperatly from the father
+                   if (pid == 0) {
+                     // runs the program on the son and checks if there was any erorr
+                     if (execv(currentPath, seperatedWords) == -1) {
+                       perror("execv");
+                       exit(EXIT_FAILURE);
                      }
+                     // commands the father to wait until his son stops whats his doing
+                   } else if (pid > 0) {
+                     wait(NULL);
+                     break;
                    }
-                   free(cpath);
                  }
-                 if(flag== 0 && startCommand !=NULL)
-                 {
-                   printf("%s: not found\n", startCommand);
-                 }
+                 directory = strtok(NULL, ":");
+               }
+
+               if (found == 0) {
+                 printf("%s: not found\n", startCommand);
+               }
+               free(cpath);
+
                  }
                  for (int i = 0; i < numArgs; i++)
                  {
