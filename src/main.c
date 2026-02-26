@@ -14,39 +14,39 @@ int main(int argc, char *argv[]) {
     // Flush after every printf
     setbuf(stdout, NULL);
 
+    char *builtins[] = {"exit", "echo", "type", NULL};
+
     while (1) {
         printf("$ ");
 
         char buffer[1000];
         if (fgets(buffer, sizeof(buffer), stdin) == NULL) break;
 
-        // Remove newline character
+        // הסרת תו הניו-ליין מהסוף
         buffer[strcspn(buffer, "\n")] = '\0';
 
         if (strlen(buffer) == 0) continue;
 
-        // Copy buffer to userInput for processing
+        // יצירת עותק לעבודה עם strtok במידת הצורך
         char userInput[1000];
         strcpy(userInput, buffer);
 
-        char *builtins[] = {"exit", "echo", "type", NULL};
-
-        // --- exit command ---
+        // --- פקודת exit ---
         if (strcmp(userInput, "exit 0") == 0 || strcmp(userInput, "exit") == 0) {
             return 0;
         }
 
-        // --- echo command ---
+        // --- פקודת echo ---
         else if (strncmp(userInput, "echo ", 5) == 0) {
             printf("%s\n", userInput + 5);
         }
 
-        // --- type command ---
+        // --- פקודת type ---
         else if (strncmp(userInput, "type ", 5) == 0) {
             char *cmd = userInput + 5;
             int flag = 0;
 
-            // Check if it's a builtin
+            // בדיקה אם זו פקודה מובנית (Builtin)
             for (int i = 0; builtins[i] != NULL; i++) {
                 if (strcmp(cmd, builtins[i]) == 0) {
                     printf("%s is a shell builtin\n", builtins[i]);
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            // Check if it's in PATH
+            // בדיקה ב-PATH במידה וזו לא פקודה מובנית
             if (flag == 0) {
                 char *path = getenv("PATH");
                 if (path) {
@@ -64,6 +64,8 @@ int main(int argc, char *argv[]) {
                     while (directory != NULL) {
                         char currentPath[1024];
                         snprintf(currentPath, sizeof(currentPath), "%s/%s", directory, cmd);
+
+                        // בדיקה אם הקובץ קיים ויש לו הרשאות הרצה
                         if (access(currentPath, X_OK) == 0) {
                             printf("%s is %s\n", cmd, currentPath);
                             flag = 1;
@@ -79,6 +81,8 @@ int main(int argc, char *argv[]) {
                 printf("%s: not found\n", cmd);
             }
         }
+
+
     }
     return 0;
 }
