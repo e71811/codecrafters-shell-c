@@ -27,13 +27,12 @@ int BetterStrTok(char *buffer, char **seperatedWords)
     // Check if we are currently NOT inside any quotes
     if (quoteMode == 0)
     {
-      // Handle backslash escaping outside of quotes
+      // Handle backslash escaping OUTSIDE of quotes (escapes everything)
       if (c == '\\')
       {
         i++; // Skip the backslash
         if (buffer[i] != '\0')
         {
-          // Treat the next character literally, no matter what it is
           cWord[j++] = buffer[i];
         }
       }
@@ -50,12 +49,10 @@ int BetterStrTok(char *buffer, char **seperatedWords)
       // checks when we arrive to space
       else if (c == ' ')
       {
-        // if the user typed alot of spaces and then a word we dont want to save the word with all the spaces
         if (j > 0)
         {
           cWord[j] = '\0';
-          seperatedWords[wordsCount] = strdup(cWord);
-          wordsCount++;
+          seperatedWords[wordsCount++] = strdup(cWord);
           j = 0;
         }
       }
@@ -73,13 +70,30 @@ int BetterStrTok(char *buffer, char **seperatedWords)
       }
       else
       {
+        // Backslashes have no special behavior here
         cWord[j++] = c;
       }
     }
     // Check if we are inside double quotes
     else if (quoteMode == '\"')
     {
-      if (c == '\"')
+      // Handle backslash escaping INSIDE double quotes (selective)
+      if (c == '\\')
+      {
+        char next = buffer[i + 1];
+        // Only escape if next char is ", \, $, `, or newline
+        if (next == '\"' || next == '\\' || next == '$' || next == '`')
+        {
+          i++; // Skip the backslash
+          cWord[j++] = buffer[i];
+        }
+        else
+        {
+          // Otherwise, treat backslash as a literal character
+          cWord[j++] = c;
+        }
+      }
+      else if (c == '\"')
       {
         quoteMode = 0;
       }
@@ -94,8 +108,7 @@ int BetterStrTok(char *buffer, char **seperatedWords)
   if (j > 0)
   {
     cWord[j] = '\0';
-    seperatedWords[wordsCount] = strdup(cWord);
-    wordsCount++;
+    seperatedWords[wordsCount++] = strdup(cWord);
   }
 
   seperatedWords[wordsCount] = NULL;
