@@ -119,16 +119,46 @@ int main(int argc, char *argv[]) {
                // ---change directory command---
              }else if(strncmp(userInput,"cd ",3) == 0)
              {
-               char *newDir;
-               newDir = strtok(userInput, " ");
-               //gets the word after cd
-               newDir = strtok(NULL, " ");
-               // changes the directory to what the user has typed
-               if (chdir(newDir)== -1)
+               char copyUserIpnput[1024] ;
+               strcpy(copyUserIpnput,userInput);
+               char *check = strtok(userInput," ");
+               // checks if the user typed cd ~
+               check = strtok(NULL," ");
+               // the user coludve typed just cd ...
+               if (check != NULL)
                {
-                 printf("cd: %s: No such file or directory\n", newDir);
+                 char newPath[1024];
+                 if (check[0] == '~')
+                 {
+                   // first i need to get the specific HOME
+                   char *Home=getenv("HOME");
+                   if (Home != NULL)
+                   {
+                     // join toghther the right path , check +1 cause i want to look at what comes after ~
+                     // and also dont want to change the check
+                     snprintf(newPath,sizeof(newPath),"%s%s",Home,check+1 );
+                     if (chdir(newPath)== -1)
+                     {
+                       printf("cd: %s: No such file or directory\n", check);
+                     }
+                   } else
+                   {
+                     perror("No HOME eror accured");
+                   }
+                 }else
+                 {
+                   // its not ~ so just
+                   char *newDir;
+                   newDir = strtok(copyUserIpnput, " ");
+                   //gets the word after cd
+                   newDir = strtok(NULL, " ");
+                   // changes the directory to what the user has typed
+                   if (chdir(newDir)== -1)
+                   {
+                     printf("cd: %s: No such file or directory\n", newDir);
+                   }
+                 }
                }
-
              }
 
              //---running programs---
