@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
       //sets the input so i can interact with it later
          char userInput[sizeof(buffer)];
       // sets buit in commands
-      char *builtins[] = {"exit", "echo", "type","pwd", NULL};
+      char *builtins[] = {"exit", "echo", "type","pwd","cd", NULL};
       int i ;
       // copying  the buffer content and making sure that in the end of it theres \0
       for(i = 0; i < strlen(buffer); i++) {
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
                  printf("%s: not found\n", cmd);
 
                }
-               // ---Type command---
+               // ---pwd command---
              }else if (strcmp(userInput,"pwd")==0)
              {
                char path[1024];
@@ -116,6 +116,19 @@ int main(int argc, char *argv[]) {
                {
                  printf("%s\n", path);
                }
+               // ---change directory command---
+             }else if(strncmp(userInput,"cd ",3) == 0)
+             {
+               char *newDir;
+               newDir = strtok(userInput, " ");
+               //gets the word after cd
+               newDir = strtok(NULL, " ");
+               // changes the directory to what the user has typed
+               if (chdir(newDir)== -1)
+               {
+                 perror("cd eror accured");
+               }
+
              }
 
              //---running programs---
