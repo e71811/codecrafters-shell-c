@@ -10,7 +10,62 @@
 #endif
 #include <sys/types.h>
 #include <sys/wait.h>
+// strtok doesnt work well with ' so i implemnted better function
+int BetterStrTok(char *buffer ,char **seperatedWords)
+{
+  int flag = 0;
+  int wordsCount = 0;
+  char cWord[1000];
+  int i= 0 ;
+  int j = 0 ;
+  while (buffer[i] != '\0')
+  {
+    // checks when we arrive to singular '
+    if (buffer[i] == '\'')
+    {
+     flag =!flag ;
+     i++;
+      continue;
+    }
+    // checks when we arrive to space
+    else if (buffer[i] == ' ')
+    {
+      if (flag)
+      {
+        // every character acts as literal so we just copy it
+        cWord[j] = buffer[i];
+        j++;
+      }else
+      {
+        // if the user typed alot of spaces and then a word we dont want to save the word with all the spaces
+        // (not literal)
+        if(j>0)
+        {
+          cWord[j] = '\0';
+          seperatedWords[wordsCount] = strdup(cWord);
+          wordsCount++;
+          j=0;
+        }
 
+      }
+    }else
+    {
+      // we found a character which is just part of a big word so no need of doing something special
+      cWord[j]=buffer[i];
+       j++;
+    }
+    i++;
+  }
+  // if we are at the last word and we saw /0 the while loop will end but we need to save the last word
+  if (j>0)
+  {
+    cWord[j] = '\0';
+    seperatedWords[wordsCount] = strdup(cWord);
+  }
+  // we ended with a NULL so we can easily go through the words and know when we finised
+  seperatedWords[wordsCount] = NULL;
+  return wordsCount;
+}
 
 int main(int argc, char *argv[]) {
   // Flush after every printf
