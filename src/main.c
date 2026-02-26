@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
       //sets the input so i can interact with it later
          char userInput[sizeof(buffer)];
       // sets buit in commands
-      char *builtins[] = {"exit", "echo", "type", NULL};
+      char *builtins[] = {"exit", "echo", "type","pwd", NULL};
       int i ;
       // copying  the buffer content and making sure that in the end of it theres \0
       for(i = 0; i < strlen(buffer); i++) {
