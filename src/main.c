@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
                // changes the directory to what the user has typed
                if (chdir(newDir)== -1)
                {
-                 perror("cd eror accured");
+                 printf("cd: %s: No such file or directory\n", newDir);
                }
 
              }
