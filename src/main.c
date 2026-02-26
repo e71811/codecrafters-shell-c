@@ -10,59 +10,92 @@
 #endif
 #include <sys/types.h>
 #include <sys/wait.h>
-// strtok doesnt work well with ' so i implemnted better function
-int BetterStrTok(char *buffer ,char **seperatedWords)
+// strtok doesnt work well with ' or " so i implemnted better function
+int BetterStrTok(char *buffer, char **seperatedWords)
 {
-  int flag = 0;
+  // 0 = no quotes, '\'' = single quotes, '\"' = double quotes
+  int quoteMode = 0;
   int wordsCount = 0;
   char cWord[1000];
-  int i= 0 ;
-  int j = 0 ;
+  int i = 0;
+  int j = 0;
+
   while (buffer[i] != '\0')
   {
-    // checks when we arrive to singular '
-    if (buffer[i] == '\'')
+    char c = buffer[i];
+
+    // Check if we are currently NOT inside any quotes
+    if (quoteMode == 0)
     {
-     flag =!flag ;
-     i++;
-      continue;
-    }
-    // checks when we arrive to space
-    else if (buffer[i] == ' ')
-    {
-      if (flag)
+      // checks when we arrive to singular '
+      if (c == '\'')
       {
-        // every character acts as literal so we just copy it
-        cWord[j] = buffer[i];
-        j++;
-      }else
+        quoteMode = '\'';
+      }
+      // checks when we arrive to double "
+      else if (c == '\"')
+      {
+        quoteMode = '\"';
+      }
+      // checks when we arrive to space
+      else if (c == ' ')
       {
         // if the user typed alot of spaces and then a word we dont want to save the word with all the spaces
         // (not literal)
-        if(j>0)
+        if (j > 0)
         {
           cWord[j] = '\0';
           seperatedWords[wordsCount] = strdup(cWord);
           wordsCount++;
-          j=0;
+          j = 0;
         }
-
       }
-    }else
+      else
+      {
+        // we found a character which is just part of a big word so no need of doing something special
+        cWord[j] = c;
+        j++;
+      }
+    }
+    // Check if we are inside single quotes
+    else if (quoteMode == '\'')
     {
-      // we found a character which is just part of a big word so no need of doing something special
-      cWord[j]=buffer[i];
-       j++;
+      if (c == '\'')
+      {
+        quoteMode = 0; // Exit single quote mode
+      }
+      else
+      {
+        // every character acts as literal so we just copy it
+        cWord[j] = c;
+        j++;
+      }
+    }
+    // Check if we are inside double quotes
+    else if (quoteMode == '\"')
+    {
+      if (c == '\"')
+      {
+        quoteMode = 0; // Exit double quote mode
+      }
+      else
+      {
+        // Inside double quotes, characters like ' are treated literally
+        cWord[j] = c;
+        j++;
+      }
     }
     i++;
   }
+
   // if we are at the last word and we saw /0 the while loop will end but we need to save the last word
-  if (j>0)
+  if (j > 0)
   {
     cWord[j] = '\0';
     seperatedWords[wordsCount] = strdup(cWord);
     wordsCount++;
   }
+
   // we ended with a NULL so we can easily go through the words and know when we finised
   seperatedWords[wordsCount] = NULL;
   return wordsCount;
