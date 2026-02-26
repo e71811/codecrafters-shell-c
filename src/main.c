@@ -27,8 +27,18 @@ int BetterStrTok(char *buffer, char **seperatedWords)
     // Check if we are currently NOT inside any quotes
     if (quoteMode == 0)
     {
+      // Handle backslash escaping outside of quotes
+      if (c == '\\')
+      {
+        i++; // Skip the backslash
+        if (buffer[i] != '\0')
+        {
+          // Treat the next character literally, no matter what it is
+          cWord[j++] = buffer[i];
+        }
+      }
       // checks when we arrive to singular '
-      if (c == '\'')
+      else if (c == '\'')
       {
         quoteMode = '\'';
       }
@@ -41,7 +51,6 @@ int BetterStrTok(char *buffer, char **seperatedWords)
       else if (c == ' ')
       {
         // if the user typed alot of spaces and then a word we dont want to save the word with all the spaces
-        // (not literal)
         if (j > 0)
         {
           cWord[j] = '\0';
@@ -52,9 +61,7 @@ int BetterStrTok(char *buffer, char **seperatedWords)
       }
       else
       {
-        // we found a character which is just part of a big word so no need of doing something special
-        cWord[j] = c;
-        j++;
+        cWord[j++] = c;
       }
     }
     // Check if we are inside single quotes
@@ -62,13 +69,11 @@ int BetterStrTok(char *buffer, char **seperatedWords)
     {
       if (c == '\'')
       {
-        quoteMode = 0; // Exit single quote mode
+        quoteMode = 0;
       }
       else
       {
-        // every character acts as literal so we just copy it
-        cWord[j] = c;
-        j++;
+        cWord[j++] = c;
       }
     }
     // Check if we are inside double quotes
@@ -76,19 +81,16 @@ int BetterStrTok(char *buffer, char **seperatedWords)
     {
       if (c == '\"')
       {
-        quoteMode = 0; // Exit double quote mode
+        quoteMode = 0;
       }
       else
       {
-        // Inside double quotes, characters like ' are treated literally
-        cWord[j] = c;
-        j++;
+        cWord[j++] = c;
       }
     }
     i++;
   }
 
-  // if we are at the last word and we saw /0 the while loop will end but we need to save the last word
   if (j > 0)
   {
     cWord[j] = '\0';
@@ -96,7 +98,6 @@ int BetterStrTok(char *buffer, char **seperatedWords)
     wordsCount++;
   }
 
-  // we ended with a NULL so we can easily go through the words and know when we finised
   seperatedWords[wordsCount] = NULL;
   return wordsCount;
 }
