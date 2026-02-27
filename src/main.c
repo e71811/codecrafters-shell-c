@@ -16,7 +16,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-
+#include <readline/readline.h>
+#include <readline/history.h>
 
 
 
@@ -163,7 +164,7 @@ void free_args(char** seperatedWords, int numArgs) {
 }
 
 // saves code duplication
-int apply_redirection(char* fileName, int target, int append, int* savedPipeLine, char** seperatedWords, int numArgs)
+int applyRedirection(char* fileName, int target, int append, int* savedPipeLine, char** seperatedWords, int numArgs)
 {
     // if there is a < command
     if (fileName != NULL)
@@ -201,22 +202,64 @@ int apply_redirection(char* fileName, int target, int append, int* savedPipeLine
     return 0;
 }
 
+char* builtinCompletion(const char* text, int state) {
+
+    static int list_index, len;
+    char* builtins[] = {"exit", "echo", "type", "pwd", "cd", NULL};
+
+    if (!state) {
+        //if state is 0 it means we got a new word so we want to calc her length
+        list_index = 0;
+        len = strlen(text);
+    }
+
+    char* name;
+    while ((name = builtins[list_index++])) {
+        // checks if any of the builtins commands start with the text characters
+        if (strncmp(name, text, len) == 0) {
+            // if we found a match we just need to return the actual builtin command
+            return strdup(name);
+        }
+    }
+    return NULL;
+}
+
+char** builtinCompletionGenerator(const char* text, int start, int end) {
+    // this line says if you didn't find any building command that fits don't try to find  names from the file
+    rl_attempted_completion_over = 1;
+    return rl_completion_matches(text, builtinCompletion);
+}
+
 int main(int argc, char* argv[])
 {
     // Flush after every printf
     setbuf(stdout, NULL);
     char* builtins[] = {"exit", "echo", "type", "pwd", "cd", NULL};
+    rl_attempted_completion_function = builtinCompletionGenerator;
     while (1)
     {
-        printf("$ ");
+        char *input = readline("$ ");
+        // if the user presses ctrl +D (eof)
+        if (!input) {
+            break;
+        }
+        // add anything the user typed
+        if (*input) {
+            add_history(input);
+        }
         //sets the buffer
         char buffer[1000];
-        //1 gives the source of input 2 whats the max size of the input can be
-        fgets(buffer, sizeof(buffer), stdin);
-        // strspn calc the amount of chars until \n then we want to change it specificly
+        strncpy(buffer, input, sizeof(buffer) - 1);
+        buffer[sizeof(buffer) - 1] = '\0';
+        free(input);
+        // strspn calc the amount of chars until \n then we want to change it specifically
         buffer[strcspn(buffer, "\n")] = '\0';
         char* seperatedWords[100];
         int numArgs = BetterStrTok(buffer, seperatedWords);
+        // checks if the user didn't accidentally entered enter
+        if (numArgs == 0) {
+            continue;
+        }
         int target;
         int append;
         // we check if there > in the input if so return the file name that comes after the <
@@ -232,7 +275,7 @@ int main(int argc, char* argv[])
         {
             int savedPipeLine = -1;
             // if there is a < command
-            if (apply_redirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
+            if (applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
             {
                 continue;
             }
@@ -266,7 +309,7 @@ int main(int argc, char* argv[])
 
             int savedPipeLine = -1;
             // if there is a < command
-            if (apply_redirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
+            if (applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
             {
                 continue;
             }
@@ -331,7 +374,7 @@ int main(int argc, char* argv[])
         {
             int savedPipeLine = -1;
             // if there is a < command
-            if (apply_redirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
+            if (applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
             {
                 continue;
             }
@@ -419,7 +462,7 @@ int main(int argc, char* argv[])
                     if (pid == 0)
                     {
                         int dummy =-1;
-                        if (apply_redirection(fileName, target, append, &dummy, seperatedWords, numArgs) == 1)
+                        if (applyRedirection(fileName, target, append, &dummy, seperatedWords, numArgs) == 1)
                         {
                             continue;
                         }
