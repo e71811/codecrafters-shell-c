@@ -1,34 +1,33 @@
-[![progress-banner](https://backend.codecrafters.io/progress/shell/dbe9424b-fd38-41de-ae74-44a4bf942dc5)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+# Build Your Own Shell (C) - Work In Progress
 
-This is a starting point for C solutions to the
-["Build Your Own Shell" Challenge](https://app.codecrafters.io/courses/shell/overview).
+This project is a POSIX-compliant shell implementation built from scratch in C. The primary goal is to gain a deep understanding of low-level process management, file system interactions, and complex string parsing.
 
-In this challenge, you'll build your own POSIX compliant shell that's capable of
-interpreting shell commands, running external programs and builtin commands like
-cd, pwd, echo and more. Along the way, you'll learn about shell command parsing,
-REPLs, builtin commands, and more.
+## Development Status
+The project is currently under active development. The current version focuses on the core execution engine and advanced argument parsing.
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+## Key Technical Milestones
 
-# Passing the first stage
+* **Advanced Custom Tokenization (BetterStrTok):** Developed a custom parser to handle single quotes ('), double quotes ("), and backslash escaping (\), replacing the limited standard strtok function.
+* **Process Management:** Implemented robust program execution using fork() and execve() to ensure child processes run in isolation from the main shell.
+* **Built-in Command Suite:** Native implementation of exit, echo, pwd, type, and cd (including HOME directory ~ support).
+* **Dynamic PATH Resolution:** Implemented a lookup mechanism to locate and execute system binaries across the environment PATH.
 
-The entry point for your `shell` implementation is in `src/main.c`. Study and
-uncomment the relevant code, then run the command below to execute the tests on
-our servers:
+## Tech Stack
+* **Language:** C (POSIX API)
+* **Build System:** CMake
+* **Operating System:** Linux/WSL
 
-```sh
-codecrafters submit
-```
+## Roadmap
 
-Time to move on to the next stage!
+### Core Features
+- [x] Basic REPL loop and command recognition
+- [x] External command execution via PATH lookup
+- [x] Advanced argument parsing (Quotes and Escaping)
 
-# Stage 2 & beyond
-
-Note: This section is for stages 2 and beyond.
-
-1. Ensure you have `cmake` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main.c`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+### Upcoming Milestones
+- [ ] I/O Redirection: Support for redirecting and appending stdout/stderr.
+- [ ] Pipelines: Implementation of dual-command and multi-command pipelines.
+- [ ] Command & Filename Completion: Tab-completion for built-ins, executables, and system paths.
+- [ ] Command History: Built-in history tracking with up/down arrow navigation.
+- [ ] History Persistence: Ability to read and write command history to files on startup and exit.
+- [ ] Signal Handling: Proper management of job control signals like Ctrl+C.
