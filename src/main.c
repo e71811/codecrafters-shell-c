@@ -129,6 +129,10 @@ char* redirectionFunc(char** seperatedWords, int* oneOrTwo, int* isAppend)
             // making sure append is turned off
             *isAppend = 0;
             *oneOrTwo = 2;
+        }else if (strcmp(seperatedWords[i], "2>>") == 0)
+        {
+            *isAppend = 1;
+            *oneOrTwo = 2;
         }else
         {
             i++;
@@ -259,15 +263,7 @@ int main(int argc, char* argv[])
                 //  if the input is only type without anything after i will just continue
                 continue;
             }
-            int flags = O_WRONLY | O_CREAT;
-            //if append is turned on we need to not delete the entire file
-            if (append)
-            {
-                flags |= O_APPEND;
-            }else
-            {
-                flags |= O_TRUNC;
-            }
+
             int savedPipeLine = -1;
             // if there is a < command
             if (apply_redirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
