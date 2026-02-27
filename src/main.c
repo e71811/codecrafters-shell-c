@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <readline/readline.h>
 #include <readline/history.h>
-
+#include <dirent.h>
 
 
 // strtok doesnt work well with ' or " so i implemnted better function
@@ -223,19 +223,75 @@ char* builtinCompletion(const char* text, int state) {
     }
     return NULL;
 }
+// checks each directory in the path for a file that starts with the input
+char* pathCompletionGenerator(const char* text, int state)
+{
+    static int list_index;
+    static char *path_copy, *directory;
+    static DIR *d;
+    static int len;
 
-char** builtinCompletionGenerator(const char* text, int start, int end) {
+    // first tab press and only the first
+    if (!state) {
+        // close any directory who may be still open
+        if (d) closedir(d);
+        d = NULL;
+        free(path_copy);
+        path_copy = strdup(getenv("PATH"));
+        // first directory
+        directory = strtok(path_copy, ":");
+        len = strlen(text);
+    }
+
+    struct dirent *dir;
+    while (directory != NULL) {
+        if (!d) {
+            d = opendir(directory);
+        }
+
+        if (d) {
+            // goes through all the files in the path
+            while ((dir = readdir(d)) != NULL) {
+                // checks if any of the files has the same start as what the input is
+                if (strncmp(dir->d_name, text, len) == 0 && dir->d_name[0] != '.') {
+
+                    char full_path[1024];
+                    snprintf(full_path, sizeof(full_path), "%s/%s", directory, dir->d_name);
+
+                    if (access(full_path, X_OK) == 0) {
+                        return strdup(dir->d_name);
+                    }
+                }
+            }
+            closedir(d);
+            d = NULL;
+        }
+        // goes to the next directory to check there for file
+        directory = strtok(NULL, ":");
+    }
+
+    return NULL; // אין יותר התאמות
+}
+// checks first for builtin and then goes through all the path
+char** commandCompletionGenerator(const char* text, int start, int end) {
     // this line says if you didn't find any building command that fits don't try to find  names from the file
     rl_attempted_completion_over = 1;
-    return rl_completion_matches(text, builtinCompletion);
+    // first checks if any buildin fits
+    char* builtin_match = builtinCompletion(text, 0);
+    if (builtin_match != NULL) {
+        free(builtin_match);
+        return rl_completion_matches(text, builtinCompletion);
+    }
+    // if no builtin fits we will check any file in each directory in the path
+    return rl_completion_matches(text, pathCompletionGenerator);
 }
 
 int main(int argc, char* argv[])
 {
-    // Flush after every printf
+
     setbuf(stdout, NULL);
     char* builtins[] = {"exit", "echo", "type", "pwd", "cd", NULL};
-    rl_attempted_completion_function = builtinCompletionGenerator;
+    rl_attempted_completion_function = commandCompletionGenerator;
     while (1)
     {
         char *input = readline("$ ");
