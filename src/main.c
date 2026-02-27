@@ -2,6 +2,26 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
+
+
+char* find_in_path(char *command) {
+    char *path = getenv("PATH");
+    char *path_copy = strdup(path);
+    char *dir = strtok(path_copy, ":");
+    static char full_path[1024];
+
+    while (dir != NULL) {
+        sprintf(full_path, "%s/%s", dir, command);
+        if (access(full_path, X_OK) == 0) {
+            free(path_copy);
+            return full_path;
+        }
+        dir = strtok(NULL, ":");
+    }
+    free(path_copy);
+    return NULL;
+}
 
 int main() {
     while (1) {
@@ -11,30 +31,37 @@ int main() {
         fgets(input, 1024, stdin);
         input[strcspn(input, "\n")] = 0;
 
+        char *args[64];
+        int i = 0;
+        char *token = strtok(input, " ");
+        while (token != NULL) {
+            args[i++] = token;
+            token = strtok(NULL, " ");
+        }
+        args[i] = NULL;
 
-        char *command = strtok(input, " ");
-        char *arg = strtok(NULL, "");
+        if (args[0] == NULL) continue;
 
-        if (command == NULL) continue;
-
-        if (strcmp(command, "exit") == 0) {
+        if (strcmp(args[0], "exit") == 0) {
             return 0;
-        } else if (strcmp(command, "echo") == 0) {
-            if (arg) printf("%s\n", arg);
-            else printf("\n");
-        } else if (strcmp(command, "pwd") == 0) {
+        } else if (strcmp(args[0], "pwd") == 0) {
             char cwd[1024];
-            if (getcwd(cwd, sizeof(cwd)) != NULL) {
-                printf("%s\n", cwd);
-            }
-        } else if (strcmp(command, "type") == 0) {
-            if (arg && (strcmp(arg, "echo") == 0 || strcmp(arg, "exit") == 0 || strcmp(arg, "pwd") == 0)) {
-                printf("%s is a shell builtin\n", arg);
-            } else {
-                printf("%s not found\n", arg ? arg : "");
-            }
+            getcwd(cwd, sizeof(cwd));
+            printf("%s\n", cwd);
         } else {
-            printf("%s: command not found\n", command);
+
+            char *full_path = find_in_path(args[0]);
+            if (full_path) {
+                pid_t pid = fork();
+                if (pid == 0) {
+                    execv(full_path, args);
+                    exit(1);
+                } else {
+                    wait(NULL);
+                }
+            } else {
+                printf("%s: command not found\n", args[0]);
+            }
         }
     }
 }
