@@ -147,6 +147,7 @@ char* redirectionFunc(char** seperatedWords, int* oneOrTwo, int* isAppend)
             fprintf(stderr, "no file name \n");
             return NULL;
         }
+        free(seperatedWords[i]);
         // delete the >
         seperatedWords[i] = NULL;
         return fileName;
@@ -285,7 +286,121 @@ char** commandCompletionGenerator(const char* text, int start, int end) {
     // if no builtin fits we will check any file in each directory in the path
     return rl_completion_matches(text, pathCompletionGenerator);
 }
+// saves the duplication code of running non builtin commands
+void runNonBuiltIn(char** args, int numArgs, char* fileName, int target, int append) {
+    char* startCommand = args[0];
 
+    if (startCommand == NULL) {
+        exit(EXIT_SUCCESS);
+    }
+
+    char* path = getenv("PATH");
+    // creates a copy of path because iam going to edit cpath and i dont want to change the original path
+    char* cpath = strdup(path);
+    // get the first word before :
+    char* directory = strtok(cpath, ":");
+    char currentPath[1024];
+    int found = 0;
+
+    // for each subsection in the path we need to check if the program is in this specific subsection
+    while (directory != NULL) {
+        // creates path + command/program
+        snprintf(currentPath, sizeof(currentPath), "%s/%s", directory, startCommand);
+
+        // checks if executable and exists
+        if (access(currentPath, X_OK) == 0) {
+            found = 1;
+
+
+            int dummy = -1;
+            if (applyRedirection(fileName, target, append, &dummy, args, numArgs) == 1) {
+                free(cpath);
+                exit(EXIT_FAILURE);
+            }
+
+            // runs the program on the current process (which is already a son)
+            if (execv(currentPath, args) == -1) {
+                perror("execv");
+                free(cpath);
+                exit(EXIT_FAILURE);
+            }
+        }
+        directory = strtok(NULL, ":");
+    }
+
+    if (found == 0) {
+        printf("%s: not found\n", startCommand);
+    }
+
+    free(cpath);
+    exit(127);
+}
+void doPipeLine(char** firstCmd, char** secondCmd,int numArgs,char *fileName,int target,int append)
+{
+    int pipeInAndPipeOut[2];
+    //creates a entry point and delivery point / write end and read end
+    if (pipe(pipeInAndPipeOut) ==-1)
+    {
+        perror("pipeInAndPipeOut");
+        return;
+    }
+    pid_t pid = fork();
+    if (pid == 0)
+    {
+        //  Making the output to the screen go insted to the write end
+        dup2(pipeInAndPipeOut[1], STDOUT_FILENO);
+
+        //after all data has been recived and delivered close the pipeLine
+        close(pipeInAndPipeOut[0]);
+        close(pipeInAndPipeOut[1]);
+        runNonBuiltIn(firstCmd, numArgs, fileName, target, append);
+        exit(EXIT_FAILURE);
+    }
+    pid_t pid2 =fork();
+    if (pid2 == 0)
+    {
+        //  now insted of waiting to the keyboard insted take the input from the read end
+        dup2(pipeInAndPipeOut[0], STDIN_FILENO);
+
+        close(pipeInAndPipeOut[0]);
+        close(pipeInAndPipeOut[1]);
+        runNonBuiltIn(secondCmd, numArgs, fileName, target, append);
+        exit(EXIT_FAILURE);
+    }
+    close(pipeInAndPipeOut[0]);
+    close(pipeInAndPipeOut[1]);
+    waitpid(pid,NULL,0);
+    waitpid(pid2,NULL,0);
+}
+int findPipeLine(int numArgs, char *seperateWords[], char* fileName, int target, int append)
+{
+    int pipeIndex = -1;
+    for (int i = 0; i < numArgs; i++)
+    {
+        // checks if there is a pipeline sign if so saves it location
+        if (strcmp(seperateWords[i],"|")==0)
+        {
+            pipeIndex = i;
+            break;
+        }
+    }
+    if (pipeIndex != -1)
+    {
+        free(seperateWords[pipeIndex]);
+        //we put insted of | a NUll so we can know which part is the giver and which the taker
+        seperateWords[pipeIndex] = NULL;
+        char** firstCmd = seperateWords;
+        char** secondCmd = &seperateWords[pipeIndex + 1];
+
+        doPipeLine(firstCmd, secondCmd, numArgs, fileName, target, append);
+        // found pipeline
+        return 1 ;
+    }else
+    {
+        //there is no pipeline
+        return 0;
+    }
+}
 int main(int argc, char* argv[])
 {
 
@@ -312,6 +427,7 @@ int main(int argc, char* argv[])
         buffer[strcspn(buffer, "\n")] = '\0';
         char* seperatedWords[100];
         int numArgs = BetterStrTok(buffer, seperatedWords);
+
         // checks if the user didn't accidentally entered enter
         if (numArgs == 0) {
             continue;
@@ -483,67 +599,19 @@ int main(int argc, char* argv[])
                 // if theres an eror with the chdir
                 printf("cd: %s: No such file or directory\n", seperatedWords[1]);
             }
-        }
-
-        //---running programs---
-        else if (true)
+            // checks if pipeline | exists
+        }else if (findPipeLine(numArgs, seperatedWords, fileName, target, append))
         {
-            char* startCommand = seperatedWords[0];
 
-            if (startCommand == NULL)
-            {
-                continue;
+        }//---running programs---
+        else
+        {
+            pid_t pid = fork();
+            if (pid == 0) {
+                runNonBuiltIn(seperatedWords, numArgs, fileName, target, append);
+            } else {
+                waitpid(pid, NULL, 0);
             }
-            char* path = getenv("PATH");
-            // creates a copy of path because iam going to edit cpath and i dont want to change the original path
-            char* cpath = strdup(path);
-            // get the first word before :
-            char* directory = strtok(cpath, ":");
-            char currentPath[1024];
-            int found = 0;
-            // for each subsection in the path we need to check if the program is in this specific subsection
-            while (directory != NULL)
-            {
-                // creates path + command/program
-                snprintf(currentPath, sizeof(currentPath), "%s/%s", directory, startCommand);
-
-                // checks if executable and exists
-                if (access(currentPath, X_OK) == 0)
-                {
-                    found = 1;
-                    // creates a son for the shell
-                    pid_t pid = fork();
-                    // only the son has pid val of 0 the father has the address in pid so that we have a way to interact
-                    // with the son seperatly from the father
-                    if (pid == 0)
-                    {
-                        int dummy =-1;
-                        if (applyRedirection(fileName, target, append, &dummy, seperatedWords, numArgs) == 1)
-                        {
-                            continue;
-                        }
-                        // runs the program on the son and checks if there was any erorr
-                        if (execv(currentPath, seperatedWords) == -1)
-                        {
-                            perror("execv");
-                            exit(EXIT_FAILURE);
-                        }
-                        // commands the father to wait until his son stops whats his doing
-                    }
-                    else if (pid > 0)
-                    {
-                        wait(NULL);
-                        break;
-                    }
-                }
-                directory = strtok(NULL, ":");
-            }
-
-            if (found == 0)
-            {
-                printf("%s: not found\n", startCommand);
-            }
-            free(cpath);
         }
         for (int i = 0; i < numArgs; i++)
         {
