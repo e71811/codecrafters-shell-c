@@ -20,6 +20,6 @@ This project is a POSIX-compliant shell implementation built from scratch in C. 
 
 ### Upcoming Milestones
 - [ ] Pipelines: Implementation of dual-command and multi-command pipelines
-- [ ] Command and Filename Completion
+- [x] Command and Filename Completion
 - [ ] Command History tracking
 - [ ] Signal Handling (Ctrl+C)
