@@ -107,7 +107,7 @@ char* redirectionFunc(char** seperatedWords)
     while (seperatedWords[i] != NULL)
     {
         // checks if there is a > command
-        if (strcmp(seperatedWords[i], ">") == 0)
+        if (strcmp(seperatedWords[i], ">") == 0 || strcmp(seperatedWords[i], "1>") == 0)
         {
             // right after > we supposed to see the fileName
             char* fileName = seperatedWords[i + 1];
