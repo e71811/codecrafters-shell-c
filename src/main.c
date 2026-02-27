@@ -157,6 +157,46 @@ void free_args(char** seperatedWords, int numArgs) {
         }
     }
 }
+
+// saves code duplication
+int apply_redirection(char* fileName, int target, int append, int* savedPipeLine, char** seperatedWords, int numArgs)
+{
+    // if there is a < command
+    if (fileName != NULL)
+    {
+        int flags = O_WRONLY | O_CREAT;
+        //if append is turned on we need to not delete the entire file
+        if (append)
+        {
+            flags |= O_APPEND;
+        }
+        else
+        {
+            flags |= O_TRUNC;
+        }
+
+        *savedPipeLine = dup(target);
+
+        //O_WRONLY == only writing
+        //O_CREAT == if the file doesnt exists create it
+        // O_TRUNC == if exists delete content inside
+        int folder = open(fileName, flags, 0644);
+
+        if (folder != -1)
+        {
+            dup2(folder, target);
+            close(folder);
+        }
+        else
+        {
+            perror("open failed");
+            free_args(seperatedWords, numArgs);
+            return 1; // continue in while loop in main
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[])
 {
     // Flush after every printf
@@ -188,35 +228,9 @@ int main(int argc, char* argv[])
         {
             int savedPipeLine = -1;
             // if there is a < command
-            if (fileName != NULL)
+            if (apply_redirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
             {
-                int flags = O_WRONLY | O_CREAT;
-                //if append is turned on we need to not delete the entire file
-                if (append)
-                {
-                    flags |= O_APPEND;
-                }else
-                {
-                    flags |= O_TRUNC;
-                }
-                savedPipeLine = dup(target);
-                //O_WRONLY == only writing
-                //O_CREAT == if the file doesnt exists create it
-                // O_TRUNC == if exists delete content inside
-                // || operates as a bitmasking
-                int folder = open(fileName, flags, 0644);
-
-                if (folder != -1)
-                {
-                    dup2(folder, target);
-                    close(folder);
-                }
-                else
-                {
-                    perror("open failed");
-                    free_args(seperatedWords, numArgs);
-                    continue;
-                }
+                continue;
             }
             for (int i = 1; seperatedWords[i] != NULL; i++)
             {
@@ -256,27 +270,10 @@ int main(int argc, char* argv[])
             }
             int savedPipeLine = -1;
             // if there is a < command
-            if (fileName != NULL)
+            if (apply_redirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
             {
-                savedPipeLine = dup(target);
-                //O_WRONLY == only writing
-                //O_CREAT == if the file doesnt exists create it
-                // O_TRUNC == if exists delete content inside
-                int folder = open(fileName, flags, 0644);
-
-                if (folder != -1)
-                {
-                    dup2(folder, target);
-                    close(folder);
-                }
-                else
-                {
-                    perror("open failed");
-                    free_args(seperatedWords, numArgs);
-                    continue;
-                }
+                continue;
             }
-
             char* cmd;
             cmd = seperatedWords[1];
             int flag = 0;
@@ -338,34 +335,9 @@ int main(int argc, char* argv[])
         {
             int savedPipeLine = -1;
             // if there is a < command
-            if (fileName != NULL)
+            if (apply_redirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
             {
-                int flags = O_WRONLY | O_CREAT;
-                //if append is turned on we need to not delete the entire file
-                if (append)
-                {
-                    flags |= O_APPEND;
-                }else
-                {
-                    flags |= O_TRUNC;
-                }
-                savedPipeLine = dup(target);
-                //O_WRONLY == only writing
-                //O_CREAT == if the file doesnt exists create it
-                // O_TRUNC == if exists delete content inside
-                int folder = open(fileName, flags, 0644);
-
-                if (folder != -1)
-                {
-                    dup2(folder, target);
-                    close(folder);
-                }
-                else
-                {
-                    perror("open failed");
-                    free_args(seperatedWords, numArgs);
-                    continue;
-                }
+                continue;
             }
             char path[1024];
             if (getcwd(path, sizeof(path)) == NULL)
@@ -450,32 +422,11 @@ int main(int argc, char* argv[])
                     // with the son seperatly from the father
                     if (pid == 0)
                     {
-                        if (fileName != NULL)
+                        int dummy =-1;
+                        if (apply_redirection(fileName, target, append, &dummy, seperatedWords, numArgs) == 1)
                         {
-                            int flags = O_WRONLY | O_CREAT;
-                            //if append is turned on we need to not delete the entire file
-                            if (append)
-                            {
-                                flags |= O_APPEND;
-                            }else
-                            {
-                                flags |= O_TRUNC;
-                            }
-                            //O_WRONLY == only writing
-                            //O_CREAT == if the file doesnt exists create it
-                            // O_TRUNC == if exists delete content inside
-                            int folder = open(fileName,flags, 0644);
-                            if (folder == -1)
-                            {
-                                perror("open failed");
-                                exit(1);
-                            }
-                            // change the stream to 1
-                            dup2(folder, target);
-                            // save the changes and close the folder
-                            close(folder);
+                            continue;
                         }
-
                         // runs the program on the son and checks if there was any erorr
                         if (execv(currentPath, seperatedWords) == -1)
                         {
