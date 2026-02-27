@@ -105,10 +105,13 @@ int BetterStrTok(char* buffer, char** seperatedWords)
 }
 
 // this function will tell me if there < command and if so will clean the seperated words accordingly
-char* redirectionFunc(char** seperatedWords, int* oneOrTwo)
+// also checks if <2
+// also checks for append
+char* redirectionFunc(char** seperatedWords, int* oneOrTwo, int* isAppend)
 {
     int i = 0;
     *oneOrTwo = 1;
+    *isAppend = 0;
     while (seperatedWords[i] != NULL)
     {
         // checks if there is a > command
@@ -116,8 +119,15 @@ char* redirectionFunc(char** seperatedWords, int* oneOrTwo)
         {
             *oneOrTwo = 1;
 
-        } else if (strcmp(seperatedWords[i], "2>") == 0)
+        }else if (strcmp(seperatedWords[i], ">>") == 0 || strcmp(seperatedWords[i], "1>>") == 0)
         {
+            // we turn on the is append
+            *oneOrTwo = 1;
+            *isAppend = 1;
+        }else if (strcmp(seperatedWords[i], "2>") == 0)
+        {
+            // making sure append is turned off
+            *isAppend = 0;
             *oneOrTwo = 2;
         }else
         {
@@ -164,8 +174,9 @@ int main(int argc, char* argv[])
         char* seperatedWords[100];
         int numArgs = BetterStrTok(buffer, seperatedWords);
         int target;
+        int append;
         // we check if there > in the input if so return the file name that comes after the <
-        char* fileName = redirectionFunc(seperatedWords,&target);
+        char* fileName = redirectionFunc(seperatedWords,&target,&append);
         // ---exit command---
         if (strcmp(seperatedWords[0], "exit") == 0)
         {
@@ -179,11 +190,21 @@ int main(int argc, char* argv[])
             // if there is a < command
             if (fileName != NULL)
             {
+                int flags = O_WRONLY | O_CREAT;
+                //if append is turned on we need to not delete the entire file
+                if (append)
+                {
+                    flags |= O_APPEND;
+                }else
+                {
+                    flags |= O_TRUNC;
+                }
                 savedPipeLine = dup(target);
                 //O_WRONLY == only writing
                 //O_CREAT == if the file doesnt exists create it
                 // O_TRUNC == if exists delete content inside
-                int folder = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                // || operates as a bitmasking
+                int folder = open(fileName, flags, 0644);
 
                 if (folder != -1)
                 {
@@ -224,6 +245,15 @@ int main(int argc, char* argv[])
                 //  if the input is only type without anything after i will just continue
                 continue;
             }
+            int flags = O_WRONLY | O_CREAT;
+            //if append is turned on we need to not delete the entire file
+            if (append)
+            {
+                flags |= O_APPEND;
+            }else
+            {
+                flags |= O_TRUNC;
+            }
             int savedPipeLine = -1;
             // if there is a < command
             if (fileName != NULL)
@@ -232,7 +262,7 @@ int main(int argc, char* argv[])
                 //O_WRONLY == only writing
                 //O_CREAT == if the file doesnt exists create it
                 // O_TRUNC == if exists delete content inside
-                int folder = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                int folder = open(fileName, flags, 0644);
 
                 if (folder != -1)
                 {
@@ -310,11 +340,20 @@ int main(int argc, char* argv[])
             // if there is a < command
             if (fileName != NULL)
             {
+                int flags = O_WRONLY | O_CREAT;
+                //if append is turned on we need to not delete the entire file
+                if (append)
+                {
+                    flags |= O_APPEND;
+                }else
+                {
+                    flags |= O_TRUNC;
+                }
                 savedPipeLine = dup(target);
                 //O_WRONLY == only writing
                 //O_CREAT == if the file doesnt exists create it
                 // O_TRUNC == if exists delete content inside
-                int folder = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                int folder = open(fileName, flags, 0644);
 
                 if (folder != -1)
                 {
@@ -413,10 +452,19 @@ int main(int argc, char* argv[])
                     {
                         if (fileName != NULL)
                         {
+                            int flags = O_WRONLY | O_CREAT;
+                            //if append is turned on we need to not delete the entire file
+                            if (append)
+                            {
+                                flags |= O_APPEND;
+                            }else
+                            {
+                                flags |= O_TRUNC;
+                            }
                             //O_WRONLY == only writing
                             //O_CREAT == if the file doesnt exists create it
                             // O_TRUNC == if exists delete content inside
-                            int folder = open(fileName,O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                            int folder = open(fileName,flags, 0644);
                             if (folder == -1)
                             {
                                 perror("open failed");
