@@ -52,4 +52,7 @@ Mkfile.old
 dkms.conf
 
 build
-vcpkg_installed
+vcpkg_installedcmake-build-*/
+build/
+.cache/
+*.bin
