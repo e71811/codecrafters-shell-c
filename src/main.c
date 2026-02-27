@@ -16,6 +16,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
+
+
+
+
 // strtok doesnt work well with ' or " so i implemnted better function
 int BetterStrTok(char* buffer, char** seperatedWords)
 {
@@ -101,32 +105,48 @@ int BetterStrTok(char* buffer, char** seperatedWords)
 }
 
 // this function will tell me if there < command and if so will clean the seperated words accordingly
-char* redirectionFunc(char** seperatedWords)
+char* redirectionFunc(char** seperatedWords, int* oneOrTwo)
 {
     int i = 0;
+    *oneOrTwo = 1;
     while (seperatedWords[i] != NULL)
     {
         // checks if there is a > command
         if (strcmp(seperatedWords[i], ">") == 0 || strcmp(seperatedWords[i], "1>") == 0)
         {
-            // right after > we supposed to see the fileName
-            char* fileName = seperatedWords[i + 1];
-            // check if there is actual filename
-            if (fileName == NULL)
-            {
-                fprintf(stderr, "no file name \n");
-                return NULL;
-            }
-            // delete the >
-            seperatedWords[i] = NULL;
-            return fileName;
+            *oneOrTwo = 1;
+
+        } else if (strcmp(seperatedWords[i], "2>") == 0)
+        {
+            *oneOrTwo = 2;
+        }else
+        {
+            i++;
+            continue;
         }
-        i++;
+        // right after > we supposed to see the fileName
+        char* fileName = seperatedWords[i + 1];
+        // check if there is actual filename
+        if (fileName == NULL)
+        {
+            fprintf(stderr, "no file name \n");
+            return NULL;
+        }
+        // delete the >
+        seperatedWords[i] = NULL;
+        return fileName;
     }
     //no >
     return NULL;
 }
-
+// manages all the free that needed to be done
+void free_args(char** seperatedWords, int numArgs) {
+    for (int i = 0; i < numArgs; i++) {
+        if (seperatedWords[i] != NULL) {
+            free(seperatedWords[i]);
+        }
+    }
+}
 int main(int argc, char* argv[])
 {
     // Flush after every printf
@@ -143,8 +163,9 @@ int main(int argc, char* argv[])
         buffer[strcspn(buffer, "\n")] = '\0';
         char* seperatedWords[100];
         int numArgs = BetterStrTok(buffer, seperatedWords);
+        int target;
         // we check if there > in the input if so return the file name that comes after the <
-        char* fileName = redirectionFunc(seperatedWords);
+        char* fileName = redirectionFunc(seperatedWords,&target);
         // ---exit command---
         if (strcmp(seperatedWords[0], "exit") == 0)
         {
@@ -158,7 +179,7 @@ int main(int argc, char* argv[])
             // if there is a < command
             if (fileName != NULL)
             {
-                savedPipeLine = dup(1);
+                savedPipeLine = dup(target);
                 //O_WRONLY == only writing
                 //O_CREAT == if the file doesnt exists create it
                 // O_TRUNC == if exists delete content inside
@@ -166,12 +187,13 @@ int main(int argc, char* argv[])
 
                 if (folder != -1)
                 {
-                    dup2(folder, 1);
+                    dup2(folder, target);
                     close(folder);
                 }
                 else
                 {
                     perror("open failed");
+                    free_args(seperatedWords, numArgs);
                     continue;
                 }
             }
@@ -188,7 +210,7 @@ int main(int argc, char* argv[])
 
             if (savedPipeLine != -1)
             {
-                dup2(savedPipeLine, 1); // return the 1 to savedPipeLine
+                dup2(savedPipeLine, target); // return the 1 to savedPipeLine
                 close(savedPipeLine);
             }
         }
@@ -198,6 +220,7 @@ int main(int argc, char* argv[])
         {
             if (numArgs < 2)
             {
+                free_args(seperatedWords, numArgs);
                 //  if the input is only type without anything after i will just continue
                 continue;
             }
@@ -205,7 +228,7 @@ int main(int argc, char* argv[])
             // if there is a < command
             if (fileName != NULL)
             {
-                savedPipeLine = dup(1);
+                savedPipeLine = dup(target);
                 //O_WRONLY == only writing
                 //O_CREAT == if the file doesnt exists create it
                 // O_TRUNC == if exists delete content inside
@@ -213,12 +236,13 @@ int main(int argc, char* argv[])
 
                 if (folder != -1)
                 {
-                    dup2(folder, 1);
+                    dup2(folder, target);
                     close(folder);
                 }
                 else
                 {
                     perror("open failed");
+                    free_args(seperatedWords, numArgs);
                     continue;
                 }
             }
@@ -275,7 +299,7 @@ int main(int argc, char* argv[])
             }
             if (savedPipeLine != -1)
             {
-                dup2(savedPipeLine, 1); // return the 1 to savedPipeLine
+                dup2(savedPipeLine, target); // return the 1 to savedPipeLine
                 close(savedPipeLine);
             }
         }
@@ -286,7 +310,7 @@ int main(int argc, char* argv[])
             // if there is a < command
             if (fileName != NULL)
             {
-                savedPipeLine = dup(1);
+                savedPipeLine = dup(target);
                 //O_WRONLY == only writing
                 //O_CREAT == if the file doesnt exists create it
                 // O_TRUNC == if exists delete content inside
@@ -294,12 +318,13 @@ int main(int argc, char* argv[])
 
                 if (folder != -1)
                 {
-                    dup2(folder, 1);
+                    dup2(folder, target);
                     close(folder);
                 }
                 else
                 {
                     perror("open failed");
+                    free_args(seperatedWords, numArgs);
                     continue;
                 }
             }
@@ -314,7 +339,7 @@ int main(int argc, char* argv[])
             }
             if (savedPipeLine != -1)
             {
-                dup2(savedPipeLine, 1); // return the 1 to savedPipeLine
+                dup2(savedPipeLine, target); // return the 1 to savedPipeLine
                 close(savedPipeLine);
             }
         }
@@ -325,6 +350,7 @@ int main(int argc, char* argv[])
             // if the user types only cd  then continue
             if (numArgs < 2 || seperatedWords[1] == NULL)
             {
+                free_args(seperatedWords, numArgs);
                 continue;
             }
             char* target = seperatedWords[1];
@@ -342,6 +368,7 @@ int main(int argc, char* argv[])
                 else
                 {
                     fprintf(stderr, "cd: HOME environment variable not set\n");
+                    free_args(seperatedWords, numArgs);
                     continue;
                 }
             }
@@ -396,7 +423,7 @@ int main(int argc, char* argv[])
                                 exit(1);
                             }
                             // change the stream to 1
-                            dup2(folder, 1);
+                            dup2(folder, target);
                             // save the changes and close the folder
                             close(folder);
                         }
