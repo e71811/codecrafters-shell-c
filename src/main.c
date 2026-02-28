@@ -178,18 +178,37 @@ void Type(char** seperatedWords, int numArgs, char** builtins) {
 int history_start_index = 0;
 void history(char** seperatedWords, int numArgs)
 {
-    // if the user only typed history without anythign else
-    if (numArgs == 1) {
+    HIST_ENTRY **list = history_list();
+    if (!list)
+    {
+        return;
+    }
+
+    // gets the legnth of the entire history
+    int total = 0;
+    while (list[total])
+    {
+        total++;
+    }
+    // if the user only typed history without anything else
+    if (numArgs == 1)
+    {
         // get history
-        HIST_ENTRY **list = history_list();
-        if (list) {
-            for (int i = 0; list[i]; i++) {
-                // print each history part by order
+        for (int i = 0; list[i]; i++) {
+            // print each history part by order
+            printf("%5d  %s\n", i + history_base, list[i]->line);
+        }
+    }else if (numArgs == 2 && atoi(seperatedWords[1]) > 0) {
+            int n = atoi(seperatedWords[1]);
+
+            // calculate exatly which history parts to show the user
+            int start = (total > n) ? (total - n) : 0;
+
+            for (int i = start; i < total; i++) {
                 printf("%5d  %s\n", i + history_base, list[i]->line);
             }
-        }
-        // lets the user decide where the the history will be saved and saves it at that moment
-    }else if (numArgs >= 3 && strcmp(seperatedWords[1], "-w") == 0) {
+        }// lets the user decide where the the history will be saved and saves it at that moment
+    else if (numArgs >= 3 && strcmp(seperatedWords[1], "-w") == 0) {
         char* custom_path = seperatedWords[2];
 
         if (write_history(custom_path) != 0) {
