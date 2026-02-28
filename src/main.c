@@ -104,6 +104,77 @@ int BetterStrTok(char* buffer, char** seperatedWords)
     seperatedWords[wordsCount] = NULL;
     return wordsCount;
 }
+void Echo(char** seperatedWords, int numArgs)
+{
+    for (int i = 1; seperatedWords[i] != NULL; i++)
+    {
+        printf("%s", seperatedWords[i]);
+        // adds " " for all the words except the last word
+        if (seperatedWords[i + 1] != NULL)
+        {
+            printf(" ");
+        }
+    }
+    printf("\n");
+}
+void Type(char** seperatedWords, int numArgs, char** builtins) {
+            if (numArgs < 2)
+            {
+                //  if the input is only type without anything after i will just stop
+                return;
+            }
+
+            char* cmd;
+            cmd = seperatedWords[1];
+            int flag = 0;
+            for (int i = 0; builtins[i] != NULL; i++)
+            {
+                if (strcmp(cmd, builtins[i]) == 0)
+                {
+                    printf("%s ", builtins[i]);
+                    printf("is a shell builtin\n");
+                    flag = 1;
+                    break;
+                }
+            }
+            if (flag == 0 && cmd != NULL)
+            {
+                // first i need to get the specific path that i want to check
+                char* path = getenv("PATH");
+                // create a copy of the path so strtok wont make chamges the original path for future usage
+                char* cpath = strdup(path);
+                // directory that in each iteration will change accordingly
+                char* directory = strtok(cpath, ":");
+                // empty plain for the snprintf
+                char currentPath[1024];
+                const char s[2] = ":";
+                while (directory != NULL)
+                {
+                    snprintf(currentPath, sizeof(currentPath), "%s/%s", directory, cmd);
+                    /// checks if the input exists in the path in a specific section
+                    if (access(currentPath,F_OK) == 0)
+                    {
+                        // we found it but we need to make sure it has execute permissions
+                        if (access(currentPath,X_OK) == 0)
+                        {
+                            printf("%s is %s \n", cmd, currentPath);
+                            flag = 1;
+                            break;
+                        }
+                        else { directory = strtok(NULL, s); }
+                    }
+                    else
+                    {
+                        directory = strtok(NULL, s);
+                    }
+                }
+                free(cpath);
+            }
+            if (flag == 0 && cmd != NULL)
+            {
+                printf("%s: not found\n", cmd);
+            }
+            }
 
 // this function will tell me if there < command and if so will clean the seperated words accordingly
 // also checks if <2
@@ -338,7 +409,45 @@ void runNonBuiltIn(char** args, int numArgs) {
     free(cpath);
     exit(127);
 }
-void doPipeLine(char** firstCmd, char** secondCmd,int numArgs)
+void decisionMaker(char** seperatedWords, int numArgs,char** builtins) {
+    char* cmd = seperatedWords[0];
+
+    int dummy = -1;
+    int target = 1;
+    int append = 0;
+    int savedPipeLine = -1;
+    char* fileName = redirectionFunc(seperatedWords, &target, &append);
+    applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs);
+    //checks if redirection exists
+    if (fileName != NULL) {
+        applyRedirection(fileName, target, append, &dummy, seperatedWords, numArgs);
+    }
+
+    // checks for builtins
+    if (strcmp(cmd, "echo") == 0) {
+        Echo(seperatedWords, numArgs);
+    }
+    else if (strcmp(cmd, "type") == 0) {
+        Type(seperatedWords, numArgs, builtins);
+    }
+    else if (strcmp(cmd, "pwd") == 0) {
+        char cwd[1024];
+        if (getcwd(cwd, sizeof(cwd)) != NULL)
+        {
+            printf("%s\n", cwd);
+        }
+    }
+    // if not buildin runNonBuiltIn
+    else {
+        runNonBuiltIn(seperatedWords, numArgs);
+    }
+    if (savedPipeLine != -1) {
+        dup2(savedPipeLine, target);
+        close(savedPipeLine);
+    }
+}
+
+void doPipeLine(char** firstCmd, char** secondCmd,int numArgs, char** builtins)
 {
     int pipeInAndPipeOut[2];
     //creates a entry point and delivery point / write end and read end
@@ -356,8 +465,9 @@ void doPipeLine(char** firstCmd, char** secondCmd,int numArgs)
         //after all data has been recived and delivered close the pipeLine
         close(pipeInAndPipeOut[0]);
         close(pipeInAndPipeOut[1]);
-        runNonBuiltIn(firstCmd, numArgs);
-        exit(EXIT_FAILURE);
+        // decide which type of command the user used (builtin/non builtin)
+        decisionMaker(firstCmd, numArgs, builtins);
+        exit(EXIT_SUCCESS);
     }
     pid_t pid2 =fork();
     if (pid2 == 0)
@@ -367,15 +477,15 @@ void doPipeLine(char** firstCmd, char** secondCmd,int numArgs)
 
         close(pipeInAndPipeOut[0]);
         close(pipeInAndPipeOut[1]);
-        runNonBuiltIn(secondCmd, numArgs);
-        exit(EXIT_FAILURE);
+        decisionMaker(secondCmd, numArgs, builtins);
+        exit(EXIT_SUCCESS);
     }
     close(pipeInAndPipeOut[0]);
     close(pipeInAndPipeOut[1]);
     waitpid(pid,NULL,0);
     waitpid(pid2,NULL,0);
 }
-int findPipeLine(int numArgs, char *seperateWords[])
+int findPipeLine(int numArgs, char *seperateWords[],char** builtins)
 {
     int pipeIndex = -1;
     for (int i = 0; i < numArgs; i++)
@@ -395,7 +505,7 @@ int findPipeLine(int numArgs, char *seperateWords[])
         char** firstCmd = seperateWords;
         char** secondCmd = &seperateWords[pipeIndex + 1];
 
-        doPipeLine(firstCmd, secondCmd, numArgs);
+        doPipeLine(firstCmd, secondCmd, numArgs, builtins);
         // found pipeline
         return 1 ;
     }else
@@ -404,6 +514,8 @@ int findPipeLine(int numArgs, char *seperateWords[])
         return 0;
     }
 }
+
+
 int main(int argc, char* argv[])
 {
 
@@ -441,142 +553,6 @@ int main(int argc, char* argv[])
             return 0;
         }
 
-        // ---echo command---
-        else if (strcmp(seperatedWords[0], "echo") == 0)
-        {
-            int savedPipeLine = -1;
-            int target =1 ;
-            int append = 0;
-
-            char* fileName = redirectionFunc(seperatedWords, &target, &append);
-            // if there is a < command
-            if (applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
-            {
-                continue;
-            }
-            for (int i = 1; seperatedWords[i] != NULL; i++)
-            {
-                printf("%s", seperatedWords[i]);
-                // adds " " for all the words except the last word
-                if (seperatedWords[i + 1] != NULL)
-                {
-                    printf(" ");
-                }
-            }
-            printf("\n");
-
-            if (savedPipeLine != -1)
-            {
-                dup2(savedPipeLine, target); // return the 1 to savedPipeLine
-                close(savedPipeLine);
-            }
-        }
-
-        // ---Type command---
-        else if (strcmp(seperatedWords[0], "type") == 0)
-        {
-            if (numArgs < 2)
-            {
-                free_args(seperatedWords, numArgs);
-                //  if the input is only type without anything after i will just continue
-                continue;
-            }
-
-            int savedPipeLine = -1;
-            int target =1 ;
-            int append = 0;
-
-            char* fileName = redirectionFunc(seperatedWords, &target, &append);
-            // if there is a < command
-            if (applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
-            {
-                continue;
-            }
-            char* cmd;
-            cmd = seperatedWords[1];
-            int flag = 0;
-            for (int i = 0; builtins[i] != NULL; i++)
-            {
-                if (strcmp(cmd, builtins[i]) == 0)
-                {
-                    printf("%s ", builtins[i]);
-                    printf("is a shell builtin\n");
-                    flag = 1;
-                    break;
-                }
-            }
-            if (flag == 0 && cmd != NULL)
-            {
-                // first i need to get the specific path that i want to check
-                char* path = getenv("PATH");
-                // create a copy of the path so strtok wont make chamges the original path for future usage
-                char* cpath = strdup(path);
-                // directory that in each iteration will change accordingly
-                char* directory = strtok(cpath, ":");
-                // empty plain for the snprintf
-                char currentPath[1024];
-                const char s[2] = ":";
-                while (directory != NULL)
-                {
-                    snprintf(currentPath, sizeof(currentPath), "%s/%s", directory, cmd);
-                    /// checks if the input exists in the path in a specific section
-                    if (access(currentPath,F_OK) == 0)
-                    {
-                        // we found it but we need to make sure it has execute permissions
-                        if (access(currentPath,X_OK) == 0)
-                        {
-                            printf("%s is %s \n", cmd, currentPath);
-                            flag = 1;
-                            break;
-                        }
-                        else { directory = strtok(NULL, s); }
-                    }
-                    else
-                    {
-                        directory = strtok(NULL, s);
-                    }
-                }
-                free(cpath);
-            }
-            if (flag == 0 && cmd != NULL)
-            {
-                printf("%s: not found\n", cmd);
-            }
-            if (savedPipeLine != -1)
-            {
-                dup2(savedPipeLine, target); // return the 1 to savedPipeLine
-                close(savedPipeLine);
-            }
-        }
-        // ---pwd command---
-        else if (strcmp(seperatedWords[0], "pwd") == 0)
-        {
-            int savedPipeLine = -1;
-            int target =1 ;
-            int append = 0;
-
-            char* fileName = redirectionFunc(seperatedWords, &target, &append);
-            // if there is a < command
-            if (applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
-            {
-                continue;
-            }
-            char path[1024];
-            if (getcwd(path, sizeof(path)) == NULL)
-            {
-                perror("getcwd eror accured");
-            }
-            else
-            {
-                printf("%s\n", path);
-            }
-            if (savedPipeLine != -1)
-            {
-                dup2(savedPipeLine, target); // return the 1 to savedPipeLine
-                close(savedPipeLine);
-            }
-        }
-
         // ---change directory command---
         else if (strcmp(seperatedWords[0], "cd") == 0)
         {
@@ -611,15 +587,17 @@ int main(int argc, char* argv[])
                 printf("cd: %s: No such file or directory\n", seperatedWords[1]);
             }
             // checks if pipeline | exists
-        }else if (findPipeLine(numArgs, seperatedWords))
+        }else if (findPipeLine(numArgs, seperatedWords,builtins))
         {
 
-        }//---running programs---
+        }else if (findPipeLine(numArgs, seperatedWords, builtins)){}
+        //---running programs---
         else
         {
             pid_t pid = fork();
             if (pid == 0) {
-                runNonBuiltIn(seperatedWords, numArgs);
+                decisionMaker(seperatedWords, numArgs, builtins);
+                exit(EXIT_SUCCESS);
             } else {
                 waitpid(pid, NULL, 0);
             }
