@@ -35,6 +35,34 @@ int BetterStrTok(char* buffer, char** seperatedWords)
 
         if (quoteMode == 0)
         {
+
+            // checks for special signs
+            if (c == '|' || c == '>')
+            {
+                // if there is a word before the special sign save it
+                if (j > 0)
+                {
+                    cWord[j] = '\0';
+                    seperatedWords[wordsCount++] = strdup(cWord);
+                    j = 0;
+                }
+
+                // checks specificly for append
+                if (c == '>' && buffer[i+1] == '>')
+                {
+                    seperatedWords[wordsCount++] = strdup(">>");
+                    i++;
+                }
+                else
+                {
+                    // save | or <
+                    char temp[2] = {c, '\0'};
+                    seperatedWords[wordsCount++] = strdup(temp);
+                }
+
+                i++;
+                continue;
+            }
             if (c == '\\')
             {
                 // Backslash outside quotes
@@ -560,10 +588,6 @@ void decisionMaker(char** seperatedWords, int numArgs,char** builtins) {
     int savedPipeLine = -1;
     char* fileName = redirectionFunc(seperatedWords, &target, &append);
     applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs);
-    //checks if redirection exists
-    if (fileName != NULL) {
-        applyRedirection(fileName, target, append, &dummy, seperatedWords, numArgs);
-    }
 
     // checks for builtins
     if (strcmp(cmd, "echo") == 0) {
