@@ -175,6 +175,7 @@ void Type(char** seperatedWords, int numArgs, char** builtins) {
                 printf("%s: not found\n", cmd);
             }
             }
+int history_start_index = history_length;
 void history(char** seperatedWords, int numArgs)
 {
     // if the user only typed history without anythign else
@@ -202,6 +203,22 @@ void history(char** seperatedWords, int numArgs)
         if (read_history(custom_path) != 0) {
 
             fprintf(stderr, "history: %s: No such file or directory\n", custom_path);
+        }
+    }
+    else if (numArgs >= 3 && strcmp(seperatedWords[1], "-a") == 0)
+    {
+        char* custom_path = seperatedWords[2];
+        int lines_to_append = history_length - history_start_index;
+
+        if (lines_to_append > 0)
+        {
+            // dont delete the history only add in the end
+            if (append_history(lines_to_append, custom_path) != 0) {
+                fprintf(stderr, "history: %s: Cannot append to file\n", custom_path);
+            } else {
+                // update the index
+                history_start_index = history_length;
+            }
         }
     }
 }
