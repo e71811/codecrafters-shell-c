@@ -587,10 +587,8 @@ int main(int argc, char* argv[])
                 printf("cd: %s: No such file or directory\n", seperatedWords[1]);
             }
             // checks if pipeline | exists
-        }else if (findPipeLine(numArgs, seperatedWords,builtins))
-        {
-
-        }else if (findPipeLine(numArgs, seperatedWords, builtins)){}
+        }
+        else if (findPipeLine(numArgs, seperatedWords, builtins)){}
         //---running programs---
         else
         {
