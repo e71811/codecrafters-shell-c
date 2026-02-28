@@ -1,4 +1,0 @@
-/usr/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles" -S "/home/ilay/projects/codecrafters/Project Shell" -B "/home/ilay/projects/codecrafters/Project Shell/cmake-build-debug-wsl"
--- Configuring done (0.0s)
--- Generating done (0.0s)
--- Build files have been written to: /home/ilay/projects/codecrafters/Project Shell/cmake-build-debug-wsl
