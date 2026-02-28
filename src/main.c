@@ -175,7 +175,30 @@ void Type(char** seperatedWords, int numArgs, char** builtins) {
                 printf("%s: not found\n", cmd);
             }
             }
+void history(char** seperatedWords, int numArgs)
+{
+    // if the user only typed history without anythign else
+    if (numArgs == 1) {
+        // get history
+        HISTORY_STATE *state = history_get_history_state();
 
+        if (state && state->entries) {
+            // print each history by order
+            for (int i = 0; i < state->length; i++) {
+                printf(" %d  %s\n", i + history_base, state->entries[i]->line);
+            }
+        }
+    }
+    // get history of a specific file
+    else if (numArgs >= 3 && strcmp(seperatedWords[1], "-r") == 0) {
+        char* custom_path = seperatedWords[2];
+
+        if (read_history(custom_path) != 0) {
+
+            fprintf(stderr, "history: %s: No such file or directory\n", custom_path);
+        }
+    }
+}
 // this function will tell me if there < command and if so will clean the seperated words accordingly
 // also checks if <2
 // also checks for append
@@ -342,7 +365,7 @@ char* pathCompletionGenerator(const char* text, int state)
         directory = strtok(NULL, ":");
     }
 
-    return NULL; // אין יותר התאמות
+    return NULL;
 }
 // checks first for builtin and then goes through all the path
 char** commandCompletionGenerator(const char* text, int start, int end) {
@@ -437,6 +460,10 @@ void decisionMaker(char** seperatedWords, int numArgs,char** builtins) {
             printf("%s\n", cwd);
         }
     }
+    else if (strcmp(cmd, "history") == 0)
+    {
+        history(seperatedWords, numArgs);
+    }
     // if not buildin runNonBuiltIn
     else {
         runNonBuiltIn(seperatedWords, numArgs);
@@ -518,15 +545,27 @@ int findPipeLine(int numArgs, char *seperateWords[],char** builtins)
 
 int main(int argc, char* argv[])
 {
-
+    // setting up the showing up history of a specific file
+    char history_path[1024];
+    // we need the home directory so we can access history no matter where which folder we are on
+    char* home = getenv("HOME");
+    if (home) {
+        // connect the shell history to HOME also . means it wont show up regulary in home to get a cleaner home folder
+        snprintf(history_path, sizeof(history_path), "%s/.shell_history", home);
+    } else {
+        // if HOME doesnt exist just create in the folder you are in right now
+        strncpy(history_path, ".shell_history", sizeof(history_path));
+    }
     setbuf(stdout, NULL);
-    char* builtins[] = {"exit", "echo", "type", "pwd", "cd", NULL};
+    char* builtins[] = {"exit", "echo", "type", "pwd", "cd","history", NULL};
     rl_attempted_completion_function = commandCompletionGenerator;
+    read_history(history_path);
     while (1)
     {
         char *input = readline("$ ");
         // if the user presses ctrl +D (eof)
         if (!input) {
+            write_history(history_path);
             break;
         }
         // add anything the user typed
@@ -550,6 +589,8 @@ int main(int argc, char* argv[])
         // ---exit command---
         if (strcmp(seperatedWords[0], "exit") == 0)
         {
+            // when the user finishes write down the history
+            write_history(history_path);
             return 0;
         }
 

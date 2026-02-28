@@ -19,7 +19,7 @@ This project is a POSIX-compliant shell implementation built from scratch in C. 
 - [x] **I/O Redirection**: Support for redirecting and appending stdout/stderr
 
 ### Upcoming Milestones
-- [ ] Pipelines: Implementation of dual-command and multi-command pipelines
+- [ ] Pipelines: Implementation of dual-command pipelines
 - [x] Command and Filename Completion
 - [ ] Command History tracking
 - [ ] Signal Handling (Ctrl+C)
