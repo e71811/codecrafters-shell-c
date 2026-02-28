@@ -175,7 +175,7 @@ void Type(char** seperatedWords, int numArgs, char** builtins) {
                 printf("%s: not found\n", cmd);
             }
             }
-int history_start_index = history_length;
+int history_start_index = 0;
 void history(char** seperatedWords, int numArgs)
 {
     // if the user only typed history without anythign else
@@ -579,6 +579,7 @@ int main(int argc, char* argv[])
     char* builtins[] = {"exit", "echo", "type", "pwd", "cd","history", NULL};
     rl_attempted_completion_function = commandCompletionGenerator;
     read_history(history_path);
+    history_start_index = history_length;
     while (1)
     {
         char *input = readline("$ ");
