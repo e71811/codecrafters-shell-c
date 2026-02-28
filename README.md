@@ -4,11 +4,21 @@ This project is a POSIX-compliant shell implementation built from scratch in C. 
 
 ## Key Technical Milestones
 
-* **Advanced Custom Tokenization (`BetterStrTok`)**: Developed a custom parser to handle single quotes, double quotes, and backslash escaping.
-* **Process Management**: Implemented robust program execution using `fork()` and `execv()` to ensure child processes run in isolation from the main shell.
-* **Modular I/O Redirection Engine**: Implemented a centralized redirection system (`apply_redirection`) that manages file descriptors using `dup2()` and bitwise flags like `O_WRONLY | O_CREAT`.
-    * Supports Output Redirection (`>`) and Append Mode (`>>`).
-    * Supports Stderr Redirection (`2>`) and Stderr Append (`2>>`).
+- **Advanced Custom Tokenization (BetterStrTok)**: A custom-built recursive parser that handles single/double quotes and backslash escaping for complex command inputs.
+
+- **Persistent Command History Engine**: Integrated GNU Readline with a custom persistence layer.
+  * Supports environment-based configuration via `HISTFILE`.
+  * Implements selective history synchronization with `history -a` (append only new entries).
+  * Supports built-in history management with `-w` (write) and `-r` (read) flags.
+  * Supports limiting displayed entries with `history <n>`.
+
+- **Intelligent Tab-Completion**: Implemented a two-tier completion generator.
+  * **Tier 1**: Built-in command recognition.
+  * **Tier 2**: Dynamic `PATH` binary lookup using `opendir` and `readdir`.
+
+- **Modular I/O Redirection & Pipelines**:
+  * Support for stdout/stderr redirection (`>`, `>>`, `2>`, `2>>`).
+  * **Dual-Command Pipelines**: Implemented inter-process communication using `pipe()` and `dup2()` to chain commands.
 
 ## Roadmap
 
@@ -16,10 +26,11 @@ This project is a POSIX-compliant shell implementation built from scratch in C. 
 - [x] Basic REPL loop and command recognition
 - [x] External command execution via PATH lookup
 - [x] Advanced argument parsing (Quotes and Escaping)
-- [x] **I/O Redirection**: Support for redirecting and appending stdout/stderr
+- [x] I/O Redirection: Full support for redirecting and appending stdout/stderr
+- [x] Persistent History: Full suite of history management tools
+- [x] Autocompletion: Command and Built-in completion using Readline
+- [x] Pipelines: Implementation of dual-command pipelines (e.g., `cmd1 | cmd2`)
 
 ### Upcoming Milestones
-- [ ] Pipelines: Implementation of dual-command pipelines
-- [x] Command and Filename Completion
-- [ ] Command History tracking
-- [ ] Signal Handling (Ctrl+C)
+- [ ] Signal Handling: Graceful handling of `Ctrl+C` and `Ctrl+Z`
+- [ ] Job Control: Background process management (`&`, `fg`, `bg`)
