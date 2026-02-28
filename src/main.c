@@ -180,12 +180,11 @@ void history(char** seperatedWords, int numArgs)
     // if the user only typed history without anythign else
     if (numArgs == 1) {
         // get history
-        HISTORY_STATE *state = history_get_history_state();
-
-        if (state && state->entries) {
-            // print each history by order
-            for (int i = 0; i < state->length; i++) {
-                printf(" %d  %s\n", i + history_base, state->entries[i]->line);
+        HIST_ENTRY **list = history_list();
+        if (list) {
+            for (int i = 0; list[i]; i++) {
+                // print each history part by order
+                printf("%5d  %s\n", i + history_base, list[i]->line);
             }
         }
     }
@@ -460,10 +459,6 @@ void decisionMaker(char** seperatedWords, int numArgs,char** builtins) {
             printf("%s\n", cwd);
         }
     }
-    else if (strcmp(cmd, "history") == 0)
-    {
-        history(seperatedWords, numArgs);
-    }
     // if not buildin runNonBuiltIn
     else {
         runNonBuiltIn(seperatedWords, numArgs);
@@ -592,8 +587,10 @@ int main(int argc, char* argv[])
             // when the user finishes write down the history
             write_history(history_path);
             return 0;
+        }else if (strcmp(seperatedWords[0], "history") == 0)
+        {
+            history(seperatedWords, numArgs);
         }
-
         // ---change directory command---
         else if (strcmp(seperatedWords[0], "cd") == 0)
         {
