@@ -187,6 +187,13 @@ void history(char** seperatedWords, int numArgs)
                 printf("%5d  %s\n", i + history_base, list[i]->line);
             }
         }
+        // lets the user decide where the the history will be saved and saves it at that moment
+    }else if (numArgs >= 3 && strcmp(seperatedWords[1], "-w") == 0) {
+        char* custom_path = seperatedWords[2];
+
+        if (write_history(custom_path) != 0) {
+            fprintf(stderr, "history: %s: Cannot write to file\n", custom_path);
+        }
     }
     // get history of a specific file
     else if (numArgs >= 3 && strcmp(seperatedWords[1], "-r") == 0) {
