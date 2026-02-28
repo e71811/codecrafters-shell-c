@@ -444,7 +444,7 @@ char* pathCompletionGenerator(const char* text, int state)
 char** commandCompletionGenerator(const char* text, int start, int end) {
     // this line says if you didn't find any building command that fits don't try to find  names from the file
     rl_attempted_completion_over = 1;
-    if(start=1)
+    if(start==1)
     {
         // first checks if any buildin fits
         char* builtin_match = builtinCompletion(text, 0);
