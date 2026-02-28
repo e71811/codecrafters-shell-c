@@ -245,8 +245,9 @@ char* fileCompletion(const char* text, int state) {
     static DIR *d;
     static struct dirent *dir;
     static int len;
-    static char dir_path[1024];
-    static const char* filename_prefix;
+    static char directory[1024];
+    static char prefix[1024];
+    static const char* fileNamePrefix;
     // open the current directory and calc the length of the text
     if (!state) {
         if (d)
@@ -256,21 +257,24 @@ char* fileCompletion(const char* text, int state) {
         char* slash = strrchr(text, '/');
         if (slash == NULL) {
             // if theres no /
-            strcpy(dir_path, ".");
-            filename_prefix = text;
+            strcpy(directory, ".");
+            prefix[0] = '\0';
+            fileNamePrefix = text;
         } else {
-            int length = slash - text;
-            strncpy(dir_path, text, length);
-            dir_path[length] = '\0';
+            int length = (slash - text)+1;
+            strncpy(prefix, text, length);
+            prefix[length] = '\0';
 
-            if (length == 0)
+            strncpy(directory, text, length - 1);
+            directory[length - 1] = '\0';
+            if (directory[0] == '\0')
             {
-                strcpy(dir_path, "/");
+                strcpy(directory, "/");
             }
-            filename_prefix = slash + 1;
+            fileNamePrefix = slash + 1;
         }
-        d = opendir(".");
-        len = strlen(text);
+        d = opendir(directory);
+        len = strlen(fileNamePrefix);
     }
 
     if (d) {
@@ -281,8 +285,10 @@ char* fileCompletion(const char* text, int state) {
                 continue;
 
             //checks if any start of a file name fits the input
-            if (strncmp(dir->d_name, text, len) == 0) {
-                return strdup(dir->d_name);
+            if (strncmp(dir->d_name, fileNamePrefix, len) == 0) {
+                char* completion = malloc(strlen(prefix) + strlen(dir->d_name) + 1);
+                sprintf(completion, "%s%s", prefix, dir->d_name);
+                return completion;
             }
         }
         closedir(d);
