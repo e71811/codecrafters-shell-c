@@ -566,14 +566,22 @@ int main(int argc, char* argv[])
 {
     // setting up the showing up history of a specific file
     char history_path[1024];
-    // we need the home directory so we can access history no matter where which folder we are on
-    char* home = getenv("HOME");
-    if (home) {
-        // connect the shell history to HOME also . means it wont show up regulary in home to get a cleaner home folder
-        snprintf(history_path, sizeof(history_path), "%s/.shell_history", home);
-    } else {
-        // if HOME doesnt exist just create in the folder you are in right now
-        strncpy(history_path, ".shell_history", sizeof(history_path));
+    char* histfile = getenv("HISTFILE");
+    if (histfile != NULL)
+    {
+        strncpy(history_path, histfile, sizeof(history_path) - 1);
+        history_path[sizeof(history_path) - 1] = '\0';
+    }else
+    {
+        // we need the home directory so we can access history no matter where which folder we are on
+        char* home = getenv("HOME");
+        if (home) {
+            // connect the shell history to HOME also . means it wont show up regulary in home to get a cleaner home folder
+            snprintf(history_path, sizeof(history_path), "%s/.shell_history", home);
+        } else {
+            // if HOME doesnt exist just create in the folder you are in right now
+            strncpy(history_path, ".shell_history", sizeof(history_path));
+        }
     }
     setbuf(stdout, NULL);
     char* builtins[] = {"exit", "echo", "type", "pwd", "cd","history", NULL};
