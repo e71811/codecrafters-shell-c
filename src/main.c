@@ -287,13 +287,16 @@ char** commandCompletionGenerator(const char* text, int start, int end) {
     return rl_completion_matches(text, pathCompletionGenerator);
 }
 // saves the duplication code of running non builtin commands
-void runNonBuiltIn(char** args, int numArgs, char* fileName, int target, int append) {
+void runNonBuiltIn(char** args, int numArgs) {
     char* startCommand = args[0];
 
     if (startCommand == NULL) {
         exit(EXIT_SUCCESS);
     }
-
+    int target = 1;
+    int append = 0;
+    // clean any < if needed
+    char* fileName = redirectionFunc(args, &target, &append);
     char* path = getenv("PATH");
     // creates a copy of path because iam going to edit cpath and i dont want to change the original path
     char* cpath = strdup(path);
@@ -335,7 +338,7 @@ void runNonBuiltIn(char** args, int numArgs, char* fileName, int target, int app
     free(cpath);
     exit(127);
 }
-void doPipeLine(char** firstCmd, char** secondCmd,int numArgs,char *fileName,int target,int append)
+void doPipeLine(char** firstCmd, char** secondCmd,int numArgs)
 {
     int pipeInAndPipeOut[2];
     //creates a entry point and delivery point / write end and read end
@@ -353,7 +356,7 @@ void doPipeLine(char** firstCmd, char** secondCmd,int numArgs,char *fileName,int
         //after all data has been recived and delivered close the pipeLine
         close(pipeInAndPipeOut[0]);
         close(pipeInAndPipeOut[1]);
-        runNonBuiltIn(firstCmd, numArgs, fileName, target, append);
+        runNonBuiltIn(firstCmd, numArgs);
         exit(EXIT_FAILURE);
     }
     pid_t pid2 =fork();
@@ -364,7 +367,7 @@ void doPipeLine(char** firstCmd, char** secondCmd,int numArgs,char *fileName,int
 
         close(pipeInAndPipeOut[0]);
         close(pipeInAndPipeOut[1]);
-        runNonBuiltIn(secondCmd, numArgs, fileName, target, append);
+        runNonBuiltIn(secondCmd, numArgs);
         exit(EXIT_FAILURE);
     }
     close(pipeInAndPipeOut[0]);
@@ -372,7 +375,7 @@ void doPipeLine(char** firstCmd, char** secondCmd,int numArgs,char *fileName,int
     waitpid(pid,NULL,0);
     waitpid(pid2,NULL,0);
 }
-int findPipeLine(int numArgs, char *seperateWords[], char* fileName, int target, int append)
+int findPipeLine(int numArgs, char *seperateWords[])
 {
     int pipeIndex = -1;
     for (int i = 0; i < numArgs; i++)
@@ -392,7 +395,7 @@ int findPipeLine(int numArgs, char *seperateWords[], char* fileName, int target,
         char** firstCmd = seperateWords;
         char** secondCmd = &seperateWords[pipeIndex + 1];
 
-        doPipeLine(firstCmd, secondCmd, numArgs, fileName, target, append);
+        doPipeLine(firstCmd, secondCmd, numArgs);
         // found pipeline
         return 1 ;
     }else
@@ -432,10 +435,6 @@ int main(int argc, char* argv[])
         if (numArgs == 0) {
             continue;
         }
-        int target;
-        int append;
-        // we check if there > in the input if so return the file name that comes after the <
-        char* fileName = redirectionFunc(seperatedWords,&target,&append);
         // ---exit command---
         if (strcmp(seperatedWords[0], "exit") == 0)
         {
@@ -446,6 +445,10 @@ int main(int argc, char* argv[])
         else if (strcmp(seperatedWords[0], "echo") == 0)
         {
             int savedPipeLine = -1;
+            int target =1 ;
+            int append = 0;
+
+            char* fileName = redirectionFunc(seperatedWords, &target, &append);
             // if there is a < command
             if (applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
             {
@@ -480,6 +483,10 @@ int main(int argc, char* argv[])
             }
 
             int savedPipeLine = -1;
+            int target =1 ;
+            int append = 0;
+
+            char* fileName = redirectionFunc(seperatedWords, &target, &append);
             // if there is a < command
             if (applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
             {
@@ -545,6 +552,10 @@ int main(int argc, char* argv[])
         else if (strcmp(seperatedWords[0], "pwd") == 0)
         {
             int savedPipeLine = -1;
+            int target =1 ;
+            int append = 0;
+
+            char* fileName = redirectionFunc(seperatedWords, &target, &append);
             // if there is a < command
             if (applyRedirection(fileName, target, append, &savedPipeLine, seperatedWords, numArgs) == 1)
             {
@@ -600,7 +611,7 @@ int main(int argc, char* argv[])
                 printf("cd: %s: No such file or directory\n", seperatedWords[1]);
             }
             // checks if pipeline | exists
-        }else if (findPipeLine(numArgs, seperatedWords, fileName, target, append))
+        }else if (findPipeLine(numArgs, seperatedWords))
         {
 
         }//---running programs---
@@ -608,7 +619,7 @@ int main(int argc, char* argv[])
         {
             pid_t pid = fork();
             if (pid == 0) {
-                runNonBuiltIn(seperatedWords, numArgs, fileName, target, append);
+                runNonBuiltIn(seperatedWords, numArgs);
             } else {
                 waitpid(pid, NULL, 0);
             }
