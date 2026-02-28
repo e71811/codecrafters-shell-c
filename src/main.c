@@ -241,6 +241,37 @@ void history(char** seperatedWords, int numArgs)
         }
     }
 }
+char* fileCompletion(const char* text, int state) {
+    static DIR *d;
+    static struct dirent *dir;
+    static int len;
+    // open the current directory and calc the length of the text
+    if (!state) {
+        if (d)
+        {
+            closedir(d);
+        }
+        d = opendir(".");
+        len = strlen(text);
+    }
+
+    if (d) {
+        // goes through the files and folders in dir
+        while ((dir = readdir(d)) != NULL) {
+            // skip current folder and father folder
+            if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
+                continue;
+
+            //checks if any start of a file name fits the input
+            if (strncmp(dir->d_name, text, len) == 0) {
+                return strdup(dir->d_name);
+            }
+        }
+        closedir(d);
+        d = NULL;
+    }
+    return NULL;
+}
 // this function will tell me if there < command and if so will clean the seperated words accordingly
 // also checks if <2
 // also checks for append
@@ -413,14 +444,21 @@ char* pathCompletionGenerator(const char* text, int state)
 char** commandCompletionGenerator(const char* text, int start, int end) {
     // this line says if you didn't find any building command that fits don't try to find  names from the file
     rl_attempted_completion_over = 1;
-    // first checks if any buildin fits
-    char* builtin_match = builtinCompletion(text, 0);
-    if (builtin_match != NULL) {
-        free(builtin_match);
-        return rl_completion_matches(text, builtinCompletion);
+    if(start=1)
+    {
+        // first checks if any buildin fits
+        char* builtin_match = builtinCompletion(text, 0);
+        if (builtin_match != NULL) {
+            free(builtin_match);
+            return rl_completion_matches(text, builtinCompletion);
+        }
+        // if no builtin fits we will check any file in each directory in the path
+        return rl_completion_matches(text, pathCompletionGenerator);
+    } else
+    {
+        return rl_completion_matches(text, fileCompletion);
     }
-    // if no builtin fits we will check any file in each directory in the path
-    return rl_completion_matches(text, pathCompletionGenerator);
+
 }
 // saves the duplication code of running non builtin commands
 void runNonBuiltIn(char** args, int numArgs) {
