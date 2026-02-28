@@ -245,11 +245,29 @@ char* fileCompletion(const char* text, int state) {
     static DIR *d;
     static struct dirent *dir;
     static int len;
+    static char dir_path[1024];
+    static const char* filename_prefix;
     // open the current directory and calc the length of the text
     if (!state) {
         if (d)
         {
             closedir(d);
+        }
+        char* slash = strrchr(text, '/');
+        if (slash == NULL) {
+            // if theres no /
+            strcpy(dir_path, ".");
+            filename_prefix = text;
+        } else {
+            int length = slash - text;
+            strncpy(dir_path, text, length);
+            dir_path[length] = '\0';
+
+            if (length == 0)
+            {
+                strcpy(dir_path, "/");
+            }
+            filename_prefix = slash + 1;
         }
         d = opendir(".");
         len = strlen(text);
