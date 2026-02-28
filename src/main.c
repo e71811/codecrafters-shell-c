@@ -19,7 +19,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <dirent.h>
-
+#include <sys/stat.h>
 
 // strtok doesnt work well with ' or " so i implemnted better function
 int BetterStrTok(char* buffer, char** seperatedWords)
@@ -264,13 +264,15 @@ char* fileCompletion(const char* text, int state) {
             int length = (slash - text)+1;
             strncpy(prefix, text, length);
             prefix[length] = '\0';
-
-            strncpy(directory, text, length - 1);
-            directory[length - 1] = '\0';
-            if (directory[0] == '\0')
+            if(length >1)
+            {
+                strncpy(directory, text, length - 1);
+                directory[length - 1] = '\0';
+            } else
             {
                 strcpy(directory, "/");
             }
+
             fileNamePrefix = slash + 1;
         }
         d = opendir(directory);
@@ -286,8 +288,21 @@ char* fileCompletion(const char* text, int state) {
 
             //checks if any start of a file name fits the input
             if (strncmp(dir->d_name, fileNamePrefix, len) == 0) {
+                char fullPath[2048];
+                snprintf(fullPath, sizeof(fullPath), "%s/%s", directory, dir->d_name);
+                struct stat st;
+                int isDir = 0;
+                if (stat(fullPath, &st) == 0 && S_ISDIR(st.st_mode)) {
+                    isDir = 1;
+                }
                 char* completion = malloc(strlen(prefix) + strlen(dir->d_name) + 1);
                 sprintf(completion, "%s%s", prefix, dir->d_name);
+                if (isDir) {
+                    strcat(completion, "/");
+                    rl_completion_append_character = '\0';
+                } else {
+                    rl_completion_append_character = ' ';
+                }
                 return completion;
             }
         }
